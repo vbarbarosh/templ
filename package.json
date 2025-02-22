@@ -1,8 +1,8 @@
 {
-  "name": "@vbarbarosh/webpack-templates",
+  "name": "@vbarbarosh/templ",
   "author": "Vladimir Barbaros",
   "version": "1.0.0",
-  "description": "A set of webpack templates",
+  "description": "Everything is a template",
   "main": "index.js",
   "scripts": {
     "build": "webpack",
