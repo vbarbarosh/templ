@@ -1,0 +1,36 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+cp -r $scriptdir/../../templ_knex/{bin,db,knexfile.js} .
+cp -rL $scriptdir/../../templ_knex/src .
+
+node - $scriptdir/../../templ_knex/package.json $scriptdir/../../node_modules/json-stable-stringify << 'EOF'
+const fs = require('fs');
+const pkg = fs.existsSync('package.json') ? require('./package.json') : {};
+const templ = require(process.argv[2]);
+const json_stable_stringify = require(process.argv[3]);
+for (const key in templ) {
+    pkg[key] = Object.assign(pkg[key]||{}, templ[key]);
+}
+// Put author, name, and version keys at the very top of package.json
+const tmp = {author: undefined, name: undefined, version: undefined};
+Object.assign(tmp, JSON.parse(json_stable_stringify(pkg)));
+fs.writeFileSync('package.json', JSON.stringify(tmp, null, 2));
+fs.appendFileSync('.env', `
+# docker run --rm -d -p 33060:3306 -e MYSQL_ROOT_PASSWORD=root -e MYSQL_USER=hello -e MYSQL_PASSWORD=hello -e MYSQL_DATABASE=hello mysql:5.7
+DB_HOSTNAME=127.0.0.1
+DB_PORT=33060
+DB_USERNAME=hello
+DB_PASSWORD=hello
+DB_DATABASE=hello
+`);
+EOF
+
+npm install

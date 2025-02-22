@@ -1,0 +1,62 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+if test -e .env; then
+    # DB_PASSWORD=foo&bar
+    eval "`cat .env | sed -E 's/([^=]+)=(.*)/\1='\''\2'\''/'`"
+fi
+
+DB_HOST=${DB_HOST:-127.0.0.1}
+DB_DATABASE=${DB_DATABASE:-${1:-hello}}
+DB_USERNAME=${DB_USERNAME:-$DB_DATABASE}
+DB_PASSWORD=${DB_PASSWORD:-$DB_USERNAME}
+
+# mysql -uroot -proot << EOF
+# mysql --defaults-extra-file=<(echo -e "[client]\npassword=root") -uroot << EOF
+cat << EOF
+-- drop database
+    DROP DATABASE IF EXISTS $DB_DATABASE;
+
+    -- Bug #19166  DROP USER IF EXISTS
+    -- http://bugs.mysql.com/bug.php?id=19166
+    -- > A good workaround is to grant a harmless privilege to the
+    -- > user before dropping it. This will create the user if it
+    -- > doesn't exist, so that it can be dropped safely
+
+    -- http://dev.mysql.com/doc/refman/5.1/en/grant.html
+    -- > However, if an account named in a GRANT statement does
+    -- > not already exist, GRANT may create it under the
+    -- > conditions described later in the discussion of the
+    -- > NO_AUTO_CREATE_USER SQL mode.
+    -- GRANT USAGE ON *.* TO '$DB_USERNAME'@'$DB_HOST' IDENTIFIED BY '$DB_PASSWORD';
+    DROP USER IF EXISTS '$DB_USERNAME'@'$DB_HOST';
+
+    -- 10.1.5. Configuring the Character Set and Collation for Applications
+    -- http://dev.mysql.com/doc/refman/5.1/en/charset-applications.html
+    -- > Specify character settings per database. To create a
+    -- > database such that its tables will use a given default
+    -- > character set and collation for data storage, use a CREATE
+    -- > DATABASE statement like this:
+    -- >
+    -- >    CREATE DATABASE mydb
+    -- >        DEFAULT CHARACTER SET utf8
+    -- >        DEFAULT COLLATE utf8_general_ci;
+    -- >
+    -- > Tables created in the database will use utf8 and
+    -- > utf8_general_ci by default for any character columns.
+
+-- create database
+    CREATE DATABASE $DB_DATABASE
+        DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci;
+
+-- create user
+    CREATE USER '$DB_USERNAME'@'$DB_HOST' IDENTIFIED BY '$DB_PASSWORD';
+    GRANT ALL ON $DB_DATABASE.* TO '$DB_USERNAME'@'$DB_HOST';
+EOF

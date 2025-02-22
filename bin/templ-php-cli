@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+cat << 'EOF'
+<?php
+
+error_reporting(-1);
+
+// https://stackoverflow.com/a/2071048/1478566
+set_error_handler(function ($code, $message, $filename, $lineno) {
+    throw new ErrorException($message, $code, 0, $filename, $lineno);
+});
+EOF

@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+cat << 'EOF'
+#!/usr/bin/env -S node
+
+const cli = require('@vbarbarosh/node-helpers/src/cli');
+const db = require('db');
+const tsc = require('helpers/tsc');
+const tsu = require('helpers/tsu');
+
+cli(main).finally(db.end);
+
+async function main()
+{
+    // Insert new user
+    if (1) {
+        const uid = db.uid_users();
+        await db('users').insert({uid, email: 'user1@email.com', ...tsc()});
+        console.log(await db('users').where('uid', uid).first());
+    }
+
+    // Update user
+    if (0) {
+        const input = {uid: 'xxx', name: 'User1'};
+        const user = await db('users').where('uid', input.uid).first();
+        if (!user) {
+            throw new Error(`User Not Found: ${input.uid}`);
+        }
+        user.name = input.name;
+        await db('users').where('uid', input.uid).update({...user, ...tsu()});
+        console.log(await db('users').where('uid', user.uid).first());
+    }
+}
+EOF

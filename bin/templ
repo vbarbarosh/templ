@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+# A starting point for every bash sript
+#
+# Reference
+# ---------
+#
+# Bash Reference Manual
+# https://www.gnu.org/software/bash/manual/bash.html
+#
+# Bash Reference Manual • The Set Builtin
+# https://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+#
+# Use the Unofficial Bash Strict Mode (Unless You Looove Debugging)
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/
+#
+# Use the Unofficial Bash Strict Mode • Essential Clean-up
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/#essential-cleanup
+#
+# How "Exit Traps" Can Make Your Bash Scripts Way More Robust And Reliable
+# http://redsymbol.net/articles/bash-exit-traps/
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+cat $scriptdir/templ.d/default

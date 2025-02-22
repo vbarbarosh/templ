@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Hello, world!</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/codemirror.css">
+    <style>
+        .CodeMirror { border: 1px solid #eee; height: auto; }
+        .CodeMirror-scroll { min-height: 100px; }
+    </style>
+</head>
+<body>
+
+<form method="POST">
+    <textarea name="s" style="display: none;"></textarea>
+    <br>
+    <button>Submit</button>
+</form>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/php/php.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/xml/xml.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/javascript/javascript.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/css/css.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/htmlmixed/htmlmixed.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.39.0/mode/clike/clike.min.js"></script>
+<script>
+    CodeMirror.fromTextArea(document.querySelector('textarea'), {
+        mode: 'text/javascript',
+        indentUnit: 4,
+        tabSize: 4,
+        indentWithTabs: false,
+        lineNumbers: true,
+        autofocus: true,
+        viewportMargin: Infinity,
+        readOnly: false,
+        extraKeys: {
+            'Tab': 'indentMore',
+            'Shift-Tab': 'indentLess',
+            'Ctrl-Enter': function () {
+                document.querySelector('form').submit();
+            }
+        }
+    });
+</script>
+
+</body>
+</html>

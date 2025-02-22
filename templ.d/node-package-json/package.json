@@ -1,0 +1,32 @@
+{
+    "author": "Vladimir Barbarosh <vladimir.barbarosh@gmail.com>",
+    "license": "MIT",
+    "name": "@vbarbarosh/hello",
+    "version": "0.0.0",
+    "description": "A set of helpers for JavaScript/Node.js",
+    "files": [
+        "src"
+    ],
+    "scripts": {
+        "test": "mocha src/**/*.test.js"
+    },
+    "keywords": [
+        "js",
+        "node",
+        "helpers"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vbarbarosh/hello.git"
+    },
+    "bugs": {
+        "url": "https://github.com/vbarbarosh/hello/issues"
+    },
+    "peerDependencies": {
+        "axios": "*",
+        "bluebird": "*"
+    },
+    "devDependencies": {
+        "mocha": "^11.0.1"
+    }
+}
