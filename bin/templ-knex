@@ -8,10 +8,10 @@ script=`realpath $0`
 scriptdir=`dirname $script`
 scriptname=`basename $script`
 
-cp -r $scriptdir/../../templ_knex/{bin,db,knexfile.js} .
-cp -rL $scriptdir/../../templ_knex/src .
+cp -r $scriptdir/../templ.d/templ-knex/{bin,db,knexfile.js} .
+cp -rL $scriptdir/../templ.d/templ-knex/src .
 
-node - $scriptdir/../../templ_knex/package.json $scriptdir/../../node_modules/json-stable-stringify << 'EOF'
+node - $scriptdir/../templ.d/templ-knex/package.json $scriptdir/../../node_modules/json-stable-stringify << 'EOF'
 const fs = require('fs');
 const pkg = fs.existsSync('package.json') ? require('./package.json') : {};
 const templ = require(process.argv[2]);

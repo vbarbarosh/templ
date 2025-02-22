@@ -8,4 +8,4 @@ script=`realpath $0`
 scriptdir=`dirname $script`
 scriptname=`basename $script`
 
-cat $scriptdir/templ.d/node-package-json/package.json
+cat $scriptdir/../templ.d/node-package-json/package.json

@@ -1,0 +1,17 @@
+{
+  "dependencies": {
+    "cuid": "^2.1.4",
+    "db": "file:db",
+    "dotenv": "^6.1.0",
+    "esm": "^3.1.1",
+    "helpers": "file:src/helpers",
+    "knex": "^0.15.2",
+    "mysql": "^2.16.0"
+  },
+  "scripts": {
+    "migrate": "knex migrate:latest",
+    "migrate:make": "knex migrate:make",
+    "migrate:rollback": "knex migrate:rollback",
+    "migrate:refresh": "knex migrate:rollback && knex migrate:latest"
+  }
+}

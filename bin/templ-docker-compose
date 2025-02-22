@@ -8,4 +8,4 @@ script=`realpath $0`
 scriptdir=`dirname $script`
 scriptname=`basename $script`
 
-cat $scriptdir/templ.d/docker-compose/docker-compose.yml
+cat $scriptdir/../templ.d/docker-compose/docker-compose.yml
