@@ -14,4 +14,5 @@ Everything is a template
 
 ```sh
 git clone https://github.com/vbarbarosh/templ
+npm install
 ```
