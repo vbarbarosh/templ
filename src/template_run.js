@@ -25,6 +25,4 @@ async function as_directory(input_file)
 {
 }
 
-template_run('/home/vb/w/templ/templ.d/default-bash');
-
 module.exports = template_run;
