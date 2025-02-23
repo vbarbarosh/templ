@@ -8,4 +8,4 @@ script=`realpath $0`
 scriptdir=`dirname $script`
 scriptname=`basename $script`
 
-cat $scriptdir/../templ.d/html/smcss-vue3.html
+cat $scriptdir/../templ.d/html-smcss-vue3/index.html

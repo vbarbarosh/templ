@@ -8,7 +8,7 @@ script=`realpath $0`
 scriptdir=`dirname $script`
 scriptname=`basename $script`
 
-cd $scriptdir/../src
+cd $scriptdir/../src/ui
 rm -rf unpkg/*
 cd unpkg
 
