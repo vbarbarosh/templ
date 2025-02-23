@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Value=1.0
+Type=Application
+Name=electron-hello
+GenericName=electron
+Comment=electron
+Icon=/templ/ubuntu/Electron_Software_Framework_Logo.svg
+Path=/templ/
+Exec=npm start
+Categories=Utility;
+StartupWMClass=@vbarbarosh/electron-hello

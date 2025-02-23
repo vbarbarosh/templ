@@ -12,7 +12,9 @@ cd $scriptdir/../src
 rm -rf unpkg/*
 cd unpkg
 
+unpkg @vbarbarosh/node-helpers@3.63.2
 unpkg @vbarbarosh/smcss@1.2.0
-unpkg jquery@3.7.1
+unpkg axios@1.7.9
 unpkg bluebird@3.7.2
+unpkg jquery@3.7.1
 unpkg vue@3.5.13
