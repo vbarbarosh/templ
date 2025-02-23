@@ -11,6 +11,8 @@ cli(main);
 
 async function main()
 {
+    let cancel_client = false;
+
     const pid_file = fs_path_resolve(__dirname, '../../var/pid');
     await fs_write(pid_file, `${process.pid}`);
     process.on('SIGURG', () => win.show());
@@ -26,10 +28,8 @@ async function main()
     });
     electron.ipcMain.handle('api_return', async function (event, out) {
         console.log('api_return', out);
-        const client_pid_file = fs_path_resolve(__dirname, '../../var/client.pid');
-        const client_stdout_file =fs_path_resolve(__dirname, '../../var/client.stdout');
-        await fs_write(client_stdout_file, out);
-        process.kill(make_int(await fs_read_utf8(client_pid_file)), 'SIGPOLL');
+        await return_to_client(out);
+        cancel_client = false;
         win.close();
     });
 
@@ -58,19 +58,33 @@ async function main()
 
     win.loadFile(fs_path_resolve(__dirname, 'index.html'));
     let done = false;
-    win.on('close', function (event) {
+    win.on('show', function () {
+        console.log('__show');
+        cancel_client = true;
+    });
+    win.on('hide', async function () {
+        console.log('__hide');
+        if (cancel_client) {
+            await return_to_client('', 'SIGTERM');
+        }
+    });
+    win.on('close', async function (event) {
+        console.log('__close');
         if (!done) {
             event.preventDefault();
         }
         win.hide();
-        console.log('__close');
     });
-    win.on('closed', function (event) {
+    win.on('closed', async function (event) {
         console.log('__closed');
     });
-    win.on('blur', function (event) {
-        win.hide();
+    win.on('blur', async function (event) {
         console.log('__blur');
+        if (cancel_client) {
+            cancel_client = false;
+            await return_to_client('', 'SIGTERM');
+        }
+        win.hide();
     });
 
     // 🟢 Add a tray icon to restore the window
@@ -115,4 +129,20 @@ async function once(inst, spec)
             inst.on(name, handler);
         });
     });
+}
+
+async function return_to_client(out, signal = 'SIGPOLL')
+{
+    try {
+        const client_pid_file = fs_path_resolve(__dirname, '../../var/client.pid');
+        const client_stdout_file = fs_path_resolve(__dirname, '../../var/client.stdout');
+        const pid = make_int(await fs_read_utf8(client_pid_file));
+        if (pid) { // ignore 0 pid
+            await fs_write(client_stdout_file, out);
+            process.kill(pid, signal);
+        }
+    }
+    catch (error) {
+        console.error('return_to_client Failed', error);
+    }
 }
