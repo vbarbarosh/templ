@@ -14,8 +14,12 @@ async function main()
         return 'pong';
     });
     electron.ipcMain.handle('api_templates_list', async function (event, ...args) {
-        const items = await fs_readdir(await fs_path_resolve(__dirname, '../templ.d'));
+        const items = await fs_readdir(await fs_path_resolve(__dirname, '../../templ.d'));
         return {items, total: items.length, limit: items.length, offset: 0};
+    });
+    electron.ipcMain.handle('api_return', async function (event, out) {
+        console.log('api_return', out);
+        win.close();
     });
 
     const win = new electron.BrowserWindow({

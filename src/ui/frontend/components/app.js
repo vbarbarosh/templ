@@ -3,7 +3,7 @@ const app = Vue.createApp({
         <div>
             <button v-on:click="click_ping">ping</button>
             <pre>{{ ping }}</pre>
-            <input ref="search" v-model="search" type="text">
+            <input ref="search" v-model="search" v-on:keypress.enter="keypress_enter" type="text">
             <ul class="xp">
                 <li v-for="item in templates_search">
                     {{ item }}
@@ -30,6 +30,12 @@ const app = Vue.createApp({
         },
         click_ping: async function () {
             this.ping = await api_ping();
+        },
+        keypress_enter: async function () {
+            const out = this.templates_search[0];
+            if (out) {
+                await api_return(out);
+            }
         },
     },
     created: async function () {
