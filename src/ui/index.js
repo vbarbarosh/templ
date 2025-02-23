@@ -2,8 +2,10 @@ const Promise = require('bluebird');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
 const electron = require('electron');
 const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
+const fs_read_utf8 = require('@vbarbarosh/node-helpers/src/fs_read_utf8');
 const fs_readdir = require('@vbarbarosh/node-helpers/src/fs_readdir');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
+const make_int = require('@vbarbarosh/node-helpers/src/make_int');
 
 cli(main);
 
@@ -24,6 +26,10 @@ async function main()
     });
     electron.ipcMain.handle('api_return', async function (event, out) {
         console.log('api_return', out);
+        const client_pid_file = fs_path_resolve(__dirname, '../../var/client.pid');
+        const client_stdout_file =fs_path_resolve(__dirname, '../../var/client.stdout');
+        await fs_write(client_stdout_file, out);
+        process.kill(make_int(await fs_read_utf8(client_pid_file)), 'SIGPOLL');
         win.close();
     });
 
