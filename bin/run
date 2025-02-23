@@ -10,4 +10,4 @@ scriptname=`basename $script`
 
 cd $scriptdir/..
 
-npm start
+src/ui/spawn.js

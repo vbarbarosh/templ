@@ -3,11 +3,16 @@ const cli = require('@vbarbarosh/node-helpers/src/cli');
 const electron = require('electron');
 const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
 const fs_readdir = require('@vbarbarosh/node-helpers/src/fs_readdir');
+const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 
 cli(main);
 
 async function main()
 {
+    const pid_file = fs_path_resolve(__dirname, '../../var/pid');
+    await fs_write(pid_file, `${process.pid}`);
+    process.on('SIGUSR1', () => win.show());
+
     await electron.app.whenReady();
 
     electron.ipcMain.handle('api_ping', function (event, ...args) {
@@ -46,14 +51,48 @@ async function main()
     // }, 2000);
 
     win.loadFile(fs_path_resolve(__dirname, 'index.html'));
-    await once(win, {
-        closed: function () {
-            console.log('__closed');
-        },
-        blur: function () {
-            console.log('__blur');
-            win.close();
-        },
+    let done = false;
+    win.on('close', function (event) {
+        if (!done) {
+            event.preventDefault();
+        }
+        win.hide();
+        console.log('__close');
+    });
+    win.on('closed', function (event) {
+        console.log('__closed');
+    });
+    win.on('blur', function (event) {
+        win.hide();
+        console.log('__blur');
+    });
+
+    // 🟢 Add a tray icon to restore the window
+    const tray = new electron.Tray(fs_path_resolve(__dirname, '../../ubuntu/icon.png'));
+    const contextMenu = electron.Menu.buildFromTemplate([
+        { label: 'Show App', click: () => win.show() },
+        { label: 'Quit', click: () => [done = true, electron.app.quit()] }
+    ]);
+    tray.setToolTip('Your App');
+    tray.setContextMenu(contextMenu);
+
+    // Restore app when clicking the tray icon
+    tray.on('click', () => win.show());
+
+    // await once(win, {
+    //     closed: function (event) {
+    //         event.preventDefault();
+    //         win.hide();
+    //         console.log('__closed');
+    //     },
+    //     blur: function () {
+    //         console.log('__blur');
+    //         win.close();
+    //     },
+    // });
+
+    await new Promise(function () {
+        // forever
     });
 }
 
