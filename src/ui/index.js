@@ -11,7 +11,7 @@ async function main()
 {
     const pid_file = fs_path_resolve(__dirname, '../../var/pid');
     await fs_write(pid_file, `${process.pid}`);
-    process.on('SIGUSR1', () => win.show());
+    process.on('SIGURG', () => win.show());
 
     await electron.app.whenReady();
 

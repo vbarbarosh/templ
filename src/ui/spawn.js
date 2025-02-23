@@ -14,11 +14,10 @@ async function main()
     try {
         const pid = make_int(await fs_read_utf8(pid_file));
         if (pid) {
-            process.kill(pid, 'SIGUSR1');
+            process.kill(pid, 'SIGURG');
             console.log('show', pid);
             return;
         }
-
     }
     catch (error) {
     }
