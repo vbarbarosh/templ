@@ -4,7 +4,7 @@
 # http://redsymbol.net/articles/unofficial-bash-strict-mode
 set -o nounset -o errexit -o pipefail
 
-# A starting point for every bash sript
+# A starting point for every bash script
 #
 # Reference
 # ---------
