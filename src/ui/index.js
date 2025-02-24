@@ -23,12 +23,15 @@ async function main()
         return 'pong';
     });
     electron.ipcMain.handle('api_templates_list', async function (event, ...args) {
-        const items = await fs_readdir(await fs_path_resolve(__dirname, '../../templ.d'));
-        return {items, total: items.length, limit: items.length, offset: 0};
+        const d = fs_path_resolve(__dirname, '../../templ.d');
+        const names = await fs_readdir(d);
+        const items = names.map(function (name) {
+            return {name, template_dir: fs_path_resolve(d, name)};
+        });
+        return {items, total: names.length, limit: names.length, offset: 0};
     });
-    electron.ipcMain.handle('api_return', async function (event, out) {
-        console.log('api_return', out);
-        await return_to_client(out);
+    electron.ipcMain.handle('api_return', async function (event, json) {
+        await return_to_client(json);
         cancel_client = false;
         win.close();
     });
@@ -131,14 +134,14 @@ async function once(inst, spec)
     });
 }
 
-async function return_to_client(out, signal = 'SIGPOLL')
+async function return_to_client(json, signal = 'SIGPOLL')
 {
     try {
         const client_pid_file = fs_path_resolve(__dirname, '../../var/client.pid');
         const client_stdout_file = fs_path_resolve(__dirname, '../../var/client.stdout');
         const pid = make_int(await fs_read_utf8(client_pid_file));
         if (pid) { // ignore 0 pid
-            await fs_write(client_stdout_file, out);
+            await fs_write(client_stdout_file, json);
             process.kill(pid, signal);
         }
     }

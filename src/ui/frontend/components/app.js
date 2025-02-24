@@ -6,7 +6,7 @@ const app = Vue.createApp({
             <input ref="search" v-model="search" v-on:keypress.enter="keypress_enter" type="text">
             <ul class="xp">
                 <li v-for="item in templates_search">
-                    {{ item }}
+                    {{ item.name }}
                 </li>
             </ul>
         </div>
@@ -20,8 +20,8 @@ const app = Vue.createApp({
     },
     computed: {
         templates_search: function () {
-            const fcmp = filter1_from_spec(this.search);
-            return this.templates_list.items.filter(fcmp);
+            const filter = filter1_from_spec(this.search);
+            return this.templates_list.items.filter(v => filter(v.name));
         },
     },
     methods: {
@@ -32,13 +32,21 @@ const app = Vue.createApp({
             this.ping = await api_ping();
         },
         keypress_enter: async function () {
-            const out = this.templates_search[0];
-            if (out) {
-                await api_return(out);
+            const templ = this.templates_search[0];
+            if (templ) {
+                await api_return(templ);
             }
+        },
+        document_visibilitychange: function () {
+            if (document.hidden) {
+                return;
+            }
+            this.$refs.search.focus();
+            this.$refs.search.select();
         },
     },
     created: async function () {
+        document.addEventListener('visibilitychange', this.document_visibilitychange);
         await this.refresh();
         await this.$nextTick();
         this.$refs.search.focus();

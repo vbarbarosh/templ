@@ -9,6 +9,7 @@ const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const make_int = require('@vbarbarosh/node-helpers/src/make_int');
 const shell_spawn = require('@vbarbarosh/node-helpers/src/shell_spawn');
 const stream = require('stream');
+const template_run = require('../template_run');
 
 cli(main);
 
