@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@vbarbarosh/smcss@1.2.0/dist/reset.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@vbarbarosh/smcss@1.2.0/dist/sm.css" rel="stylesheet">
+    <title>___TITLE___</title>
+    <style>
+        html {
+            background: #d8c4b6;
+            color: #213555;
+        }
+        .bs25 {
+            box-shadow: 0 0 25px rgba(0,0,0,0.25);
+            border: 1px solid currentColor;
+        }
+        .images {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .images-item {
+            border: 1px solid currentColor;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f5efe7;
+            color: #3e5879;
+        }
+        .images-img {
+            display: block;
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+
+<div class="images">
+
+    <a class="images-item" href="files/img1.jpg" data-fancybox="images" data-caption="">
+        <img class="images-img" src="files/thumbnails/img1.jpg" alt="">
+    </a>
+    <a class="images-item" href="files/img2.jpg" data-fancybox="images" data-caption="">
+        <img class="images-img" src="files/thumbnails/img2.jpg" alt="">
+    </a>
+    <a class="images-item" href="files/img3.jpg" data-fancybox="images" data-caption="">
+        <img class="images-img" src="files/thumbnails/img3.jpg" alt="">
+    </a>
+    <a class="images-item" href="files/img4.jpg" data-fancybox="images" data-caption="">
+        <img class="images-img" src="files/thumbnails/img4.jpg" alt="">
+    </a>
+    <a class="images-item" href="files/img5.jpg" data-fancybox="images" data-caption="">
+        <img class="images-img" src="files/thumbnails/img5.jpg" alt="">
+    </a>
+    <a class="images-item" href="files/img6.jpg" data-fancybox="images" data-caption="">
+        <img class="images-img" src="files/thumbnails/img6.jpg" alt="">
+    </a>
+    <a class="images-item" href="files/img7.jpg" data-fancybox="images" data-caption="">
+        <img class="images-img" src="files/thumbnails/img7.jpg" alt="">
+    </a>
+    <a class="images-item" href="files/img8.jpg" data-fancybox="images" data-caption="">
+        <img class="images-img" src="files/thumbnails/img8.jpg" alt="">
+    </a>
+    <a class="images-item" href="files/img9.jpg" data-fancybox="images" data-caption="">
+        <img class="images-img" src="files/thumbnails/img9.jpg" alt="">
+    </a>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+<script>
+Fancybox.bind('[data-fancybox]');
+</script>
+
+</body>
+</html>
