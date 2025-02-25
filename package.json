@@ -11,7 +11,8 @@
   },
   "license": "MIT",
   "dependencies": {
-    "@vbarbarosh/node-helpers": "^3.62.0",
+    "@vbarbarosh/node-helpers": "^3.64.0",
+    "@vbarbarosh/type-helpers": "^0.1.0",
     "electron": "^34.2.0"
   }
 }
