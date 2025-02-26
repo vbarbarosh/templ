@@ -5,7 +5,7 @@ const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
 const fs_read_utf8 = require('@vbarbarosh/node-helpers/src/fs_read_utf8');
 const fs_readdir = require('@vbarbarosh/node-helpers/src/fs_readdir');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
-const make_int = require('@vbarbarosh/node-helpers/src/make_int');
+const make_int = require('@vbarbarosh/type-helpers/src/make_int');
 
 cli(main);
 
