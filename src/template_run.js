@@ -5,9 +5,9 @@ const fs_copy = require('@vbarbarosh/node-helpers/src/fs_copy');
 /**
  * Create file(s) from a template
  */
-async function template_run(templ_file)
+async function template_run({template_dir})
 {
-    await fs_copy(templ_file, 'a');
+    await fs_copy(template_dir, 'a');
     // const stat = await fs_stat(input_file)
     // if (stat.isFile()) {
     //     await as_file(input_file);
