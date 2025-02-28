@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>electron-hello</title>
+    <link href="unpkg/@xterm/xterm@5.5.0/css/xterm.css" rel="stylesheet" />
+    <link href="unpkg/@vbarbarosh/smcss@1.2.0/dist/reset.css" rel="stylesheet">
+    <link id="smcss" href="unpkg/@vbarbarosh/smcss@1.2.0/dist/sm.css" rel="stylesheet">
+</head>
+<body>
+
+<div id="app"></div>
+<div id="xterm"></div>
+
+<script src="unpkg/@xterm/addon-fit@0.10.0/lib/addon-fit.js"></script>
+<script src="unpkg/@xterm/xterm@5.5.0/lib/xterm.js"></script>
+<script src="unpkg/axios@1.7.9/dist/axios.js"></script>
+<script src="unpkg/bluebird@3.7.2/js/browser/bluebird.js"></script>
+<script src="unpkg/jquery@3.7.1/dist/jquery.js"></script>
+<script src="unpkg/vue@3.5.13/dist/vue.global.js"></script>
+
+<script src="unpkg/@vbarbarosh/node-helpers@3.63.2/dist/browser.js"></script>
+
+<script src="frontend/api/api_ping.js"></script>
+<script src="frontend/api/api_shell_pty.js"></script>
+<script src="frontend/helpers/css.js"></script>
+<script src="frontend/helpers/pc.js"></script>
+<script src="frontend/helpers/px.js"></script>
+
+<script src="frontend/components/app.js"></script>
+
+<script src="frontend/components/xterm.js"></script>
+
+<script>
+    app.mount('#app');
+</script>
+
+</body>
+</html>
