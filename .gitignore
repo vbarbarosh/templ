@@ -1,4 +1,5 @@
 /dist
 /node_modules
+/research/out
 /src/ui/unpkg
 /var
