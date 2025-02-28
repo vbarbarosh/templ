@@ -35,6 +35,7 @@ app.component('xterm', {
             },
         });
 
+        this.xterm.focus();
         this.xterm.onResize(this.resize_xterm);
         this.xterm.onData(v => this.proc.write(v));
         window.addEventListener('resize', this.resize_window);
