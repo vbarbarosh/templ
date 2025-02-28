@@ -10,10 +10,16 @@ cli(main);
 
 async function main()
 {
+    let _exit_code;
+
     await electron.app.whenReady();
 
     electron.ipcMain.handle('api_ping', function () {
         return `pong ${format_date(new Date())}`;
+    });
+    electron.ipcMain.handle('api_exit', function (event, exit_code) {
+        _exit_code = exit_code;
+        win.close();
     });
     electron.ipcMain.handle('api_shell_pty', async function (event, cmd, options) {
         let proc;
@@ -53,10 +59,10 @@ async function main()
             proc.onData(function (data) {
                 sender.send(signals.ondata, data);
             });
-            proc.onExit(function ({exitcode, signal}) {
+            proc.onExit(function ({exitCode: exit_code, signal}) {
                 clean();
-                if (exitcode) {
-                    sender.send(signals.onend, {message: `Process terminated with ${exitcode}, and signal=${signal}`});
+                if (exit_code) {
+                    sender.send(signals.onend, {message: `Process terminated with ${exit_code}, and signal=${signal}`, exit_code, signal});
                 }
                 else {
                     sender.send(signals.onend);
@@ -119,6 +125,10 @@ async function main()
             win.close();
         },
     });
+
+    if (_exit_code) {
+        process.exit(_exit_code);
+    }
 }
 
 async function once(inst, spec)

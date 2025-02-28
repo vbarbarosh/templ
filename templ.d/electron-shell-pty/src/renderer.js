@@ -4,6 +4,9 @@ electron.contextBridge.exposeInMainWorld('ElectronApp', {
     api_ping: function () {
         return electron.ipcRenderer.invoke('api_ping');
     },
+    api_exit: function (exitcode) {
+        return electron.ipcRenderer.invoke('api_exit', exitcode);
+    },
     api_shell_pty: async function ({cmd, options, ondata}) {
         let _resolve, _reject;
         const signals = await electron.ipcRenderer.invoke('api_shell_pty', cmd, options);

@@ -40,7 +40,13 @@ app.component('xterm', {
         this.xterm.onData(v => this.proc.write(v));
         window.addEventListener('resize', this.resize_window);
 
-        await this.proc.promise();
+        try {
+            await this.proc.promise();
+            await api_exit(0);
+        }
+        catch (error) {
+            await api_exit(error.exit_code || 1);
+        }
     },
     unmounted: function () {
         window.removeEventListener('resize', this.resize_window);
