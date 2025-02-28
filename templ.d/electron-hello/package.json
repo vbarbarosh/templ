@@ -1,0 +1,18 @@
+{
+  "name": "@vbarbarosh/electron-hello",
+  "author": "Vladimir Barbarosh <vladimir.barbarosh@gmail.com>",
+  "version": "0.0.0",
+  "description": "",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "postinstall": "bin/configure-unpkg"
+  },
+  "license": "ISC",
+  "dependencies": {
+    "@vbarbarosh/node-helpers": "^3.64.0",
+    "@vbarbarosh/type-helpers": "^0.1.0",
+    "electron": "^34.3.0"
+  }
+}
