@@ -109,7 +109,7 @@ async function main()
     //     win.webContents.executeJavaScript('console.log("js from main", new Date())');
     // }, 2000);
 
-    win.loadFile(fs_path_resolve(__dirname, 'index.html'));
+    await win.loadFile(fs_path_resolve(__dirname, 'static/index.html'));
     await once(win, {
         closed: function () {
             console.log('__closed');
