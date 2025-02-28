@@ -102,9 +102,9 @@ async function main()
         // backgroundColor: '#11191f',
     });
 
-    // 🔶 Ctrl+Shift+I to open
-    win.webContents.openDevTools({mode: 'bottom', activate: false});
-
+    // // 🔶 Ctrl+Shift+I to open
+    // win.webContents.openDevTools({mode: 'bottom', activate: false});
+    //
     // setInterval(function () {
     //     win.webContents.executeJavaScript('console.log("js from main", new Date())');
     // }, 2000);
