@@ -105,7 +105,7 @@ async function main()
             nodeIntegration: false,
             preload: fs_path_resolve(__dirname, 'renderer.js'),
         },
-        // backgroundColor: '#11191f',
+        backgroundColor: '#000',
     });
 
     // // 🔶 Ctrl+Shift+I to open
