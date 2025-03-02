@@ -9,7 +9,7 @@ https://github.com/electron/electron/issues/30652
 
 ## Issue 2
 
-After choosing *Cancel*, app crashes:
+After choosing **Cancel**, app crashes:
 
 ```text
 [41804:0302/223844.021888:ERROR:screencast_portal.cc(367)] Failed to start the screen cast session.
