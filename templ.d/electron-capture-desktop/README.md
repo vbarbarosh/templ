@@ -5,6 +5,8 @@ The Share Screen consent prompt appears every time
 
 <img src="img/consent.png" style="max-width:400px;">
 
+https://github.com/electron/electron/issues/30652
+
 ## Issue 2
 
 After choosing *Cancel*, app crashes:
