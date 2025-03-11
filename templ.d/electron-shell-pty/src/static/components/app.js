@@ -1,12 +1,25 @@
 const app = Vue.createApp({
     template: `
-        <xterm class="fix-f flex-row-center black" />
+        <div class="fix-f vsplit">
+            <div class="p5 mi5" style="background:#2c2c2c;">
+                <button v-on:click="exec('./artisan migrate')">migrate</button>
+                <button v-on:click="exec('./artisan migrate:rollback')">migrate:rollback</button>
+                <button v-on:click="exec('git status')">git status</button>
+            </div>
+            <div class="fluid rel">
+                <xterm ref="xterm" class="abs-f black" />
+            </div>
+        </div>
     `,
     data: function () {
         return {
         };
     },
     methods: {
+        exec: async function (cmd) {
+            this.$refs.xterm.write(`${cmd}\n`);
+            this.$refs.xterm.focus();
+        },
     },
     created: async function () {
     },

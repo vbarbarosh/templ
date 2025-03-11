@@ -14,6 +14,14 @@ app.component('xterm', {
     watch: {
     },
     methods: {
+        // public methods
+        focus: function () {
+            this.xterm.focus();
+        },
+        write: function (s) {
+            this.proc.write(s);
+        },
+        // private methods
         resize_window: function () {
             this.fit_addon.fit();
         },
