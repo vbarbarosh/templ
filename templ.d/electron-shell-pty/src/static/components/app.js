@@ -4,7 +4,10 @@ const app = Vue.createApp({
             <div class="p5 mi5" style="background:#2c2c2c;">
                 <button v-on:click="exec('./artisan migrate')">migrate</button>
                 <button v-on:click="exec('./artisan migrate:rollback')">migrate:rollback</button>
+                <button v-on:click="exec('./artisan schema:dump')">schema:dump</button>
                 <button v-on:click="exec('git status')">git status</button>
+                <button v-on:click="exec('git add .; git stash')">git stash</button>
+                <button v-on:click="exec('git stash pop')">git stash pop</button>
             </div>
             <div class="fluid rel">
                 <xterm ref="xterm" class="abs-f black" />
