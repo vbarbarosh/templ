@@ -45,7 +45,7 @@ async function main()
             electron.ipcMain.addListener(signals.pause, pause);
             electron.ipcMain.addListener(signals.resume, resume);
         }
-        function clean() {
+        function teardown() {
             electron.ipcMain.removeAllListeners(signals.ready);
             electron.ipcMain.removeAllListeners(signals.clear);
             electron.ipcMain.removeAllListeners(signals.resize);
@@ -60,7 +60,7 @@ async function main()
                 sender.send(signals.ondata, data);
             });
             proc.onExit(function ({exitCode: exit_code, signal}) {
-                clean();
+                teardown();
                 if (exit_code) {
                     sender.send(signals.onend, {message: `Process terminated with ${exit_code}, and signal=${signal}`, exit_code, signal});
                 }
