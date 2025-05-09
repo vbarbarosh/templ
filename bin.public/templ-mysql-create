@@ -15,7 +15,9 @@ scriptname=`basename $script`
 # This will allow to override .env var from command line.
 
 if test -e .env; then
+    set +o nounset
     source .env
+    set -o nounset
     if test -z ${PREFIX:-}; then
         # https://stackoverflow.com/a/32116308/1478566
         PREFIX=`grep -E 'DATABASE|USERNAME' .env | grep -zoP '\A(.*)(?=.*?\n\1)' | tr -d '\0' || true`
