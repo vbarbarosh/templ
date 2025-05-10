@@ -21,7 +21,7 @@ app.component('s-table3', {
                 <template v-for="item in items">
                     <template v-if="item.group">
                         <tr v-for="(subitem, i) in item.items" v-bind:key="subitem.key">
-                            <td v-if="!i" v-bind:rowspan="item.items.length">{{ item.label }}</td>
+                            <th v-if="!i" v-bind:rowspan="item.items.length">{{ item.label }}</th>
                             <template v-for="col in computed_columns">
                                 <component v-if="col.component_td"
                                            v-bind:is="col.component_td"

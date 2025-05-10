@@ -19,7 +19,9 @@ app.component('s-table2', {
                 </tr>
                 <template v-for="item in items">
                     <template v-if="item.group">
-                        <tr v-bind:key="item.key" v-bind:colspan="columns.length">{{ item.label }}</tr>
+                        <tr v-bind:key="item.key">
+                            <th v-bind:colspan="columns.length">{{ item.label }}</th>
+                        </tr>
                         <tr v-for="subitem in item.items" v-bind:key="subitem.key">
                             <template v-for="col in computed_columns">
                                 <component v-if="col.component_td"
