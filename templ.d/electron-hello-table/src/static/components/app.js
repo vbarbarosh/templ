@@ -8,76 +8,23 @@ const app = Vue.createApp({
         <div class="mg15">
             <button v-on:click="click_ping">ping</button>
             <pre>{{ ping }}</pre>
-            <input ref="search" v-model="search" v-on:keypress.enter="keypress_enter" type="text">
             <s-tabs v-bind:items="tabs" />
         </div>
     `,
     data: function () {
         return {
             ping: null,
-            search: '',
-            items: [
-                'anchors.jpg',
-                'balloons.jpg',
-                'birdcage.jpg',
-                'boat.jpg',
-                'cyclists.jpg',
-                'fortress.jpg',
-                'graffiti.jpg',
-                'hand-water.jpg',
-                'heavy-box.jpg',
-                'man-on-bench.jpg',
-                'pipe-sculpture.jpg',
-                'plane.jpg',
-                'rain-coats.jpg',
-                'restaurant-view.jpg',
-                'sandy-boots.jpg',
-                'scarecrow.jpg',
-                'slimy.jpg',
-                'trafalgar.jpg',
-                'tree.jpg',
-                'waterfall.jpg',
-                'wood-textures.jpg',
-                'yellow-balloon.jpg',
-            ],
-            columns: [
-                {label: 'name', read: v => v},
-            ],
             tabs: [
-                {label: 'tab1', component: 'app-tab1'},
-                {label: 'tab2', component: 'app-tab2'},
-                {label: 'tab3', component: 'app-tab3'},
+                {label: 'Basic', component: 'app-tab1'},
+                {label: 'Groups rowspan', component: 'app-tab2'},
+                {label: 'Groups colspan', component: 'app-tab3'},
             ],
         };
-    },
-    computed: {
-        items_search: function () {
-            const filter = filter1_from_spec(this.search);
-            return this.items.filter(filter);
-        },
     },
     methods: {
         click_ping: async function () {
             this.ping = await api_ping();
         },
-        keypress_enter: async function () {
-            const templ = this.templates_search[0];
-            if (templ) {
-                await api_return(templ);
-            }
-        },
-        document_visibilitychange: function () {
-            if (document.hidden) {
-                return;
-            }
-            this.$refs.search.focus();
-            this.$refs.search.select();
-        },
-    },
-    created: async function () {
-        document.addEventListener('visibilitychange', this.document_visibilitychange);
-        await this.$nextTick();
-        this.$refs.search.focus();
     },
 });
 

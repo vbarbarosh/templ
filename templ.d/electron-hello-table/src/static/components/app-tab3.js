@@ -2,10 +2,130 @@ app.component('app-tab3', {
     inject: ['app'],
     template: `
         <div>
-            <h2>tab3</h2>
-            <p>Nulla eu quam felis. Suspendisse euismod ligula sapien, eget suscipit magna euismod dictum. Morbi lobortis magna vel lorem vestibulum, a tempor purus efficitur. In sed odio massa. Mauris pellentesque tempus nunc, a aliquet augue dignissim vel. Curabitur a pellentesque eros, ut rutrum ipsum. Nulla quis faucibus nisl, et suscipit metus. Nunc a iaculis elit.</p>
-            <p>Aliquam mollis, sem in placerat ultrices, leo lorem dignissim sapien, eu suscipit justo ligula vel libero. Donec sodales lectus ut consequat lobortis. Sed et lacus eu nibh iaculis porta. Cras ante magna, commodo non sodales sit amet, porttitor in nunc. Etiam imperdiet enim iaculis, fermentum dui nec, scelerisque neque. Proin sodales consectetur vulputate. Nulla maximus eros tortor, sit amet tincidunt est convallis a.</p>
-            <p>Nam iaculis cursus leo sit amet pellentesque. Curabitur mollis semper semper. Nunc luctus fermentum diam, a luctus mi rutrum et. Phasellus vel condimentum libero. Donec sit amet neque vulputate risus pulvinar blandit in ut libero. Vivamus magna massa, eleifend in purus vehicula, mollis posuere lacus. Morbi sit amet finibus erat, ac bibendum dolor. Aenean ultricies quis diam quis accumsan. Curabitur eu eros vel tortor egestas fermentum in vitae massa. Curabitur accumsan quam et consectetur suscipit. Nullam quis metus elit. Nunc et viverra mauris, eget pretium arcu. Mauris sit amet elit et mauris iaculis tristique. In hac habitasse platea dictumst. Aenean eget posuere lacus. Etiam pellentesque vulputate quam.</p>
+            <s-table3 v-bind:items="items" v-bind:columns="columns" />
         </div>
     `,
+    data: function () {
+        return {
+            items: [
+                {
+                    group: true,
+                    label: 'Engineering',
+                    items: [
+                        {
+                            'department': 'Engineering',
+                            'team': 'Frontend',
+                            'name': 'John Smith',
+                            'position': 'Senior Developer',
+                            'q1_score': 85,
+                            'q2_score': 88,
+                            'q3_score': 92,
+                            'q4_score': 90,
+                            'total': 355
+                        },
+                        {
+                            'department': 'Engineering',
+                            'team': 'Frontend',
+                            'name': 'Emily Johnson',
+                            'position': 'Junior Developer',
+                            'q1_score': 78,
+                            'q2_score': 82,
+                            'q3_score': 85,
+                            'q4_score': 88,
+                            'total': 333
+                        },
+                        {
+                            'department': 'Engineering',
+                            'team': 'Backend',
+                            'name': 'Michael Chen',
+                            'position': 'Lead Developer',
+                            'q1_score': 92,
+                            'q2_score': 94,
+                            'q3_score': 96,
+                            'q4_score': 95,
+                            'total': 377
+                        },
+                        {
+                            'department': 'Engineering',
+                            'team': 'Backend',
+                            'name': 'Sarah Williams',
+                            'position': 'Developer',
+                            'q1_score': 85,
+                            'q2_score': 87,
+                            'q3_score': 89,
+                            'q4_score': 91,
+                            'total': 352
+                        },
+                    ],
+                },
+                {
+                    label: 'Marketing',
+                    group: true,
+                    items: [
+                        {
+                            'department': 'Marketing',
+                            'team': 'Digital',
+                            'name': 'David Brown',
+                            'position': 'Marketing Manager',
+                            'q1_score': 82,
+                            'q2_score': 85,
+                            'q3_score': 88,
+                            'q4_score': 90,
+                            'total': 345
+                        },
+                        {
+                            'department': 'Marketing',
+                            'team': 'Content',
+                            'name': 'Jessica Lee',
+                            'position': 'Content Specialist',
+                            'q1_score': 88,
+                            'q2_score': 90,
+                            'q3_score': 92,
+                            'q4_score': 94,
+                            'total': 364
+                        },
+                    ]
+                },
+                {
+                    label: 'Sales',
+                    group: true,
+                    items: [
+                        {
+                            'department': 'Sales',
+                            'team': 'Enterprise',
+                            'name': 'Robert Taylor',
+                            'position': 'Account Executive',
+                            'q1_score': 75,
+                            'q2_score': 80,
+                            'q3_score': 85,
+                            'q4_score': 92,
+                            'total': 332
+                        },
+                        {
+                            'department': 'Sales',
+                            'team': 'SMB',
+                            'name': 'Jennifer Adams',
+                            'position': 'Sales Representative',
+                            'q1_score': 82,
+                            'q2_score': 84,
+                            'q3_score': 86,
+                            'q4_score': 88,
+                            'total': 340
+                        }
+                    ],
+                },
+            ],
+            columns: [
+                // {label: 'Department', read: v => v.department},
+                {label: 'Team', read: v => v.team},
+                {label: 'Name', read: v => v.name},
+                {label: 'Position', read: v => v.position},
+                {label: 'q1_score', read: v => v.q1_score},
+                {label: 'q2_score', read: v => v.q2_score},
+                {label: 'q3_score', read: v => v.q3_score},
+                {label: 'q4_score', read: v => v.q4_score},
+                {label: 'Total', read: v => v.total},
+            ],
+        };
+    },
 });
