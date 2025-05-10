@@ -32,8 +32,8 @@ async function main()
     });
 
     // 🔶 Ctrl+Shift+I to open
-    // win.webContents.openDevTools({mode: 'bottom', activate: false});
-    //
+    win.webContents.openDevTools({mode: 'bottom', activate: false});
+
     // setInterval(function () {
     //     win.webContents.executeJavaScript('console.log("js from main", new Date())');
     // }, 2000);

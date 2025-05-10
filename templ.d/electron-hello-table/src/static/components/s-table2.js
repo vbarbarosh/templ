@@ -29,7 +29,7 @@ app.component('s-table2', {
                                            v-bind:key="col.key"
                                            v-bind:value="subitem"
                                            v-bind:class="col.class_td" />
-                                <td v-else v-bind:key="col.key" v-bind:class="col.class_td">
+                                <td v-else v-bind:key="col.key_else" v-bind:class="col.class_td">
                                     <slot v-if="col.slot" v-bind:name="col.slot" v-bind:item="subitem" />
                                     <component v-else-if="col.component" v-bind:is="col.component" v-bind:value="subitem" />
                                     <template v-else>{{ col.read(subitem) }}</template>
@@ -45,7 +45,7 @@ app.component('s-table2', {
                                            v-bind:key="col.key"
                                            v-bind:value="item"
                                            v-bind:class="col.class_td" />
-                                <td v-else v-bind:key="col.key" v-bind:class="col.class_td">
+                                <td v-else v-bind:key="col.key_else" v-bind:class="col.class_td">
                                     <slot v-if="col.slot" v-bind:name="col.slot" v-bind:item="item" />
                                     <component v-else-if="col.component" v-bind:is="col.component" v-bind:value="item" />
                                     <template v-else>{{ col.read(item) }}</template>
@@ -61,8 +61,11 @@ app.component('s-table2', {
         computed_columns: function () {
             if (this.columns) {
                 return this.columns.map(function (column, i) {
+                    // warnHandler Template compilation error: v-if/else branches must use unique keys.
+                    const key =  column.key || column.uid || column.label || `col:${i}`;
                     return {
-                        key: column.key || column.uid || column.label || `col:${i}`,
+                        key,
+                        key_else: `${key}-else`,
                         label: column.label,
                         class_th: `${column.class||''} ${column.class_th||''}`.trim() || null,
                         class_td: `${column.class||''} ${column.class_td||''}`.trim() || null,
