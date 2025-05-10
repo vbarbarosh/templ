@@ -1,5 +1,4 @@
 app.component('s-table', {
-    emits: ['update:modelValue'],
     props: ['items', 'columns', 'headless'],
     template: `
         <table class="bn-table">
