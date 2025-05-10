@@ -1,10 +1,15 @@
 const app = Vue.createApp({
+    provide: function () {
+        return {
+            app: this,
+        };
+    },
     template: `
-        <div>
+        <div class="mg15">
             <button v-on:click="click_ping">ping</button>
             <pre>{{ ping }}</pre>
             <input ref="search" v-model="search" v-on:keypress.enter="keypress_enter" type="text">
-            <s-table v-bind:items="items_search" v-bind:columns="columns" />
+            <s-tabs v-bind:items="tabs" />
         </div>
     `,
     data: function () {
@@ -37,6 +42,11 @@ const app = Vue.createApp({
             ],
             columns: [
                 {label: 'name', read: v => v},
+            ],
+            tabs: [
+                {label: 'tab1', component: 'app-tab1'},
+                {label: 'tab2', component: 'app-tab2'},
+                {label: 'tab3', component: 'app-tab3'},
             ],
         };
     },

@@ -1,7 +1,7 @@
 app.component('s-table', {
     props: ['items', 'columns', 'headless'],
     template: `
-        <table class="bn-table">
+        <table>
             <thead v-if="(headless === undefined || (headless !== '' && !headless))">
                 <tr>
                     <th v-for="col in computed_columns" v-bind:key="col.key" v-bind:class="col.class_th">
