@@ -6,7 +6,8 @@ services:
       - "4566:4566"
     environment:
       SERVICES: s3
-      # ⚠️ The PERSISTENCE flag is ignored unless you have a Pro license.
+      # ⚠️ The PERSISTENCE flag is ignored without a Pro license.
+      # ⚠️ All data will be lost after a restart.
       PERSISTENCE: 1
     volumes:
       - ./data:/var/lib/localstack
