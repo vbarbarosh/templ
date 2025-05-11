@@ -1,0 +1,20 @@
+services:
+  # https://hub.docker.com/r/minio/minio
+  # https://github.com/minio/minio/tree/master/docs/orchestration/docker-compose
+  minio1:
+    image: minio/minio
+    restart: always
+    ports:
+      - 9000:9000
+      - 9001:9001
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address :9001
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./data:/data
