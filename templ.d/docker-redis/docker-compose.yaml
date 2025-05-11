@@ -1,0 +1,5 @@
+services:
+  redis:
+    image: redis:7.2.4
+    restart: always
+    network_mode: host
