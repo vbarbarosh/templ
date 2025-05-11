@@ -2,6 +2,8 @@
 
 // A basic template for node cli apps
 
+require('@dotenvx/dotenvx').config();
+
 const Promise = require('bluebird');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
 const perf_end_human = require('@vbarbarosh/node-helpers/src/perf_end_human');

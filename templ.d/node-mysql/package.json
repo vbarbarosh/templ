@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@dotenvx/dotenvx": "^1.43.0",
     "@vbarbarosh/node-helpers": "^3.65.0",
     "mysql2": "^3.12.0"
   }
