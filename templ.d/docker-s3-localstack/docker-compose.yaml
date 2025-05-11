@@ -1,0 +1,12 @@
+services:
+  localstack:
+    image: localstack/localstack
+    restart: always
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3
+      # ⚠️ The PERSISTENCE flag is ignored unless you have a Pro license.
+      PERSISTENCE: 1
+    volumes:
+      - ./data:/var/lib/localstack
