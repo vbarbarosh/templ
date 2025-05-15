@@ -5,6 +5,7 @@ https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/720/Big_Buck_Bunny_720_10s_
 https://samplelib.com/lib/preview/mp4/sample-20s.mp4
 https://thetestdata.com/assets/video/mp4/highquality/4k_Thetestdata.mp4
 https://thetestdata.com/assets/video/mp4/720/10MB_720P_THETESTDATA.COM_mp4.mp4
+https://filesamples.com/samples/video/mp4/sample_1280x720_surfing_with_audio.mp4
         `.trim().split('\n');
     },
     doc_get: async function () {

@@ -45,7 +45,7 @@ const app = Vue.createApp({
 <div class="fix-f hsplit oa">
     <div class="fluid flex-row-center black">
         <video v-if="doc.active"
-               v-bind:src="doc.active.split('/').map(v => encodeURIComponent(v)).join('/')"
+               v-bind:src="doc.active"
                class="max-ww max-hh"
                controls
                autoplay></video>
