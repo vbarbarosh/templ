@@ -1,0 +1,12 @@
+{
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@vbarbarosh/express-helpers": "^2.2.1",
+    "@vbarbarosh/node-helpers": "^3.62.0",
+    "body-parser": "^2.2.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

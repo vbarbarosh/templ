@@ -1,0 +1,8 @@
+services:
+  node-app-json-doc:
+    image: node-app-json-doc
+    restart: always
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./data:/app/data
