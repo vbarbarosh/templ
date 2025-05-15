@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://unpkg.com/@vbarbarosh/smcss@1.2.0/dist/reset.css" rel="stylesheet">
+    <link href="https://unpkg.com/@vbarbarosh/smcss@1.2.0/dist/sm.css" rel="stylesheet">
+    <title>html-video-player</title>
+    <style>
+/* https://coolors.co/palette/606c38-283618-fefae0-dda15e-bc6c25 */
+.pal1 { background: #283618; color: #DDA15E; }
+.pal1-hov:hover,
+.pal1-hov.active
+{ background: #606C38; color: #FEFAE0; cursor: pointer; }
+.gap5 { gap: 5px;}
+.gap10 { gap: 10px;}
+    </style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<script src="https://unpkg.com/axios@1.7.9/dist/axios.js"></script>
+<script src="https://unpkg.com/@vbarbarosh/dd@1.9.0/dist/dd.js"></script>
+<script src="https://unpkg.com/jquery@3.7.1/dist/jquery.js"></script>
+<script src="https://unpkg.com/bluebird@3.7.2/js/browser/bluebird.js"></script>
+<script src="https://unpkg.com/vue@3.5.12/dist/vue.global.js"></script>
+<script>
+window.apis = {
+    files_all: async function () {
+        return [];
+    },
+    doc_get: async function () {
+        return JSON.parse(localStorage.getItem('doc'));
+    },
+    doc_put: async function (doc) {
+        localStorage.setItem('doc', JSON.stringify(doc));
+    },
+};
+</script>
+<script src="apis.js"></script>
+<script>
+const app = Vue.createApp({
+    template: `
+<div class="fix-f hsplit oa">
+    <div class="fluid flex-row-center black">
+        <video v-if="doc.active"
+               v-bind:src="(doc.active.match(/^https?:/) ? doc.active : encodeURIComponent(doc.active))"
+               class="max-ww max-hh"
+               controls
+               autoplay></video>
+    </div>
+    <div class="w35p oa lh20m pal1">
+        <ul class="xp xm">
+            <li v-for="item in items"
+                v-on:click="click_item(item)"
+                v-bind:class="{active: (doc.active === item)}"
+                class="p10 pal1-hov flex-row gap10">
+                <div class="wrap" style="word-break:break-all;white-space:pre-wrap;">
+                    {{ item }}
+                </div>
+                <div class="mla mi5 nowrap">
+                    <button v-on:click.stop="click_done(item)">done</button>
+                    <button v-on:click.stop="click_repeat(item)">repeat</button>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+    `,
+    data: function () {
+        return {
+            doc: {
+                active: null,
+                done: [],
+            },
+            items: [],
+        };
+    },
+    methods: {
+        refresh: async function () {
+            await Promise.all([
+                this.refresh_files(),
+                this.refresh_doc()
+            ]);
+        },
+        refresh_files: async function () {
+            this.items = await apis.files_all();
+        },
+        refresh_doc: async function () {
+            const doc = await apis.doc_get();
+            doc.active ??= null;
+            doc.done ??= [];
+            doc.repeat ??= [];
+            this.doc = doc;
+            this.items = this.items.filter(v => !this.doc.done.includes(v) && !this.doc.repeat.includes(v));
+        },
+        push: async function () {
+            await apis.doc_put(this.doc);
+        },
+        click_item: async function (item) {
+            this.doc.active = item;
+            await Promise.all([this.push(), this.$nextTick()]);
+            document.querySelector('video')?.focus();
+        },
+        click_done: async function (item) {
+            this.doc.done.push(item);
+            if (this.doc.active === item) {
+                this.doc.active = null;
+            }
+            await this.push();
+            await this.refresh_doc();
+        },
+        click_repeat: async function (item) {
+            this.doc.repeat.push(item);
+            if (this.doc.active === item) {
+                this.doc.active = null;
+            }
+            await this.push();
+            await this.refresh_doc();
+        },
+    },
+    created: async function () {
+        await this.refresh();
+    },
+    mounted: async function () {
+        document.querySelector('.active')?.scrollIntoView();
+    },
+});
+app.mixin({
+    methods: {
+        px,
+        pc,
+    },
+});
+app.mount('#app');
+function px(v) {
+    return v ? `${v}px` : '0';
+}
+function pc(v) {
+    return v ? `${v*100}%` : '0';
+}
+function http_get_json(url, options) {
+    return axios.get(url, {responseType: 'json', ...options}).then(v => v.data);
+}
+function http_put_json(url, body, options) {
+    return axios.put(url, body, {responseType: 'json', ...options}).then(v => v.data);
+}
+</script>
+
+</body>
+</html>
