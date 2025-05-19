@@ -13,6 +13,8 @@
     "@vbarbarosh/node-helpers": "^3.64.0",
     "@vbarbarosh/type-helpers": "^0.1.0",
     "chokidar": "^4.0.3",
-    "electron": "^34.2.0"
+    "electron": "^34.2.0",
+    "mime": "^4.0.7",
+    "sharp": "^0.34.1"
   }
 }
