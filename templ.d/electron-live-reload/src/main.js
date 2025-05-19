@@ -11,14 +11,17 @@ const fs_path_dirname = require('@vbarbarosh/node-helpers/src/fs_path_dirname');
 const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
 const fs_read_stream = require('@vbarbarosh/node-helpers/src/fs_read_stream');
 const fs_stat = require('@vbarbarosh/node-helpers/src/fs_stat');
-const mime = require('mime').default;
 const sharp = require('sharp');
 const util = require('node:util');
+
+let mime = null;
 
 cli(main);
 
 async function main()
 {
+    mime = await import('mime').then(v => v.default);
+
     await electron.app.whenReady();
 
     electron.ipcMain.handle('api_ping', function () {
