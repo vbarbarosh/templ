@@ -30,7 +30,8 @@ async function main()
     await Promise.map(response.Contents, mapper, {concurrency: 100});
     async function mapper(item) {
         const tagging = await s3.send(new aws.GetObjectTaggingCommand({Bucket: 'hello', Key: item.Key}));
-        console.log({item, tags: tagging.TagSet});
+        const acl = await s3.send(new aws.GetObjectAclCommand({Bucket: 'hello', Key: item.Key}));
+        console.log({item, tags: tagging.TagSet, acl: JSON.stringify(acl.Grants)});
     }
 
     console.log(`🎉 Done in ${perf_end_human(time0)}`);

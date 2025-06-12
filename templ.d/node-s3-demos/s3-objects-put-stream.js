@@ -25,6 +25,8 @@ async function main()
         apiVersion: '2006-03-01',
     });
 
+    // s3gw does not yet support new aws-chunked transfer mode used for node streams [@aws-sdk/client-s3 ≥ v 3.729.0]
+    process.env.AWS_REQUEST_CHECKSUM_CALCULATION = 'when_required';
     const response = await s3.send(new aws.PutObjectCommand({
         Bucket: 'hello',
         Key: fs_path_basename(__filename),

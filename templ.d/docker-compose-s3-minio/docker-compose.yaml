@@ -10,6 +10,10 @@ services:
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
+      # --- virtual-host mode ---
+      MINIO_DOMAIN: minio.test # all buckets become *.minio.test
+      MINIO_SERVER_URL: http://minio.test:9000 # public URL MinIO puts in presigned links
+      MINIO_BROWSER_REDIRECT_URL: http://console.minio.test:9001
     command: server /data --console-address :9001
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]

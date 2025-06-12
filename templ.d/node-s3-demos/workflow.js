@@ -11,9 +11,9 @@ const stream = require('node:stream');
 // 2. Define a set of friendly function
 
 const clients = [
-    {domain: 'hello', region: 'us-east-1', accessKeyId: 'minioadmin', secretAccessKey: 'minioadmin', endpoint: 'http://localhost:9000'},
-    {domain: 'f1.minio.test', region: 'us-east-1', accessKeyId: 'minioadmin', secretAccessKey: 'minioadmin', endpoint: 'http://localhost:9000'},
-    {domain: 'f2.minio.test', region: 'us-east-1', accessKeyId: 'minioadmin', secretAccessKey: 'minioadmin', endpoint: 'http://localhost:9000'},
+    {domain: 'hello.minio.test', bucket: 'hello', region: 'us-east-1', accessKeyId: 'minioadmin', secretAccessKey: 'minioadmin', endpoint: 'http://minio.test:9000'},
+    {domain: 'f1.minio.test', bucket: 'f1', region: 'us-east-1', accessKeyId: 'minioadmin', secretAccessKey: 'minioadmin', endpoint: 'http://minio.test:9000'},
+    {domain: 'f2.minio.test', bucket: 'f2', region: 'us-east-1', accessKeyId: 'minioadmin', secretAccessKey: 'minioadmin', endpoint: 'http://minio.test:9000'},
 ];
 
 cli(main);
@@ -28,25 +28,26 @@ async function main()
         'https://f1.minio.test/bar.txt',
         'https://f2.minio.test/foo.txt',
         'https://custom.minio.test/foo.txt',
+        'https://hello.minio.test/foo.txt',
     ]));
 
     await s3_upload([
-        {url: 'http://hello/file1.txt', body: '111' + new Date().toJSON()},
-        {url: 'http://hello/file2.txt', body: '222' + new Date().toJSON()},
-        {url: 'http://hello/file3.txt', body: '333' + new Date().toJSON()},
+        {url: 'http://hello.minio.test/file1.txt', body: '111' + new Date().toJSON()},
+        {url: 'http://hello.minio.test/file2.txt', body: '222' + new Date().toJSON()},
+        {url: 'http://hello.minio.test/file3.txt', body: '333' + new Date().toJSON()},
     ]);
 
     const tmp = await s3_download_utf8([
-        'http://hello/file1.txt',
-        'http://hello/file2.txt',
-        'http://hello/file3.txt'
+        'http://hello.minio.test/file1.txt',
+        'http://hello.minio.test/file2.txt',
+        'http://hello.minio.test/file3.txt'
     ]);
     console.log(tmp);
 
     await s3_remove([
-        'http://hello/file1.txt',
-        'http://hello/file2.txt',
-        'http://hello/file3.txt'
+        'http://hello.minio.test/file1.txt',
+        'http://hello.minio.test/file2.txt',
+        'http://hello.minio.test/file3.txt'
     ]);
 
     console.log(`🎉 Done in ${perf_end_human(time0)}`);
@@ -61,7 +62,7 @@ function s3_group(urls)
                 accessKeyId: client.accessKeyId,
                 secretAccessKey: client.secretAccessKey,
             },
-            forcePathStyle: true,
+            forcePathStyle: false,
             signatureVersion: 'v4',
             region: client.region,
             apiVersion: '2006-03-01',
@@ -70,14 +71,14 @@ function s3_group(urls)
 
     const unknown_urls = [];
     const processed_urls = new Set();
-    const domain_to_client = new Map(clients.map(v => [v.domain, v]));
+    const bucket_to_client = new Map(clients.map(client => [client.bucket ?? client.domain, client]));
     const groups = new Map();
     urls.forEach(function (url) {
         if (processed_urls.has(url)) {
             return;
         }
         processed_urls.add(url);
-        const client = domain_to_client.get(s3_parse(url).Bucket) ?? null;
+        const client = bucket_to_client.get(s3_parse(url).Bucket) ?? null;
         if (!client) {
             unknown_urls.push(url);
         }
@@ -94,8 +95,9 @@ function s3_group(urls)
 
 function s3_parse(url)
 {
-    const obj = new URL(url);
-    return {Bucket: obj.hostname, Key: obj.pathname};
+    const {hostname, pathname} = new URL(url);
+    const client = clients.find(v => v.domain === hostname);
+    return {Bucket: client?.bucket ?? hostname, Key: pathname};
 }
 
 // an array of {url, body, public: true, options: {}}

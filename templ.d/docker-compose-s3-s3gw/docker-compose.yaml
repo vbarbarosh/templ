@@ -1,0 +1,33 @@
+services:
+  s3gw:
+    image: quay.io/s3gw/s3gw
+    restart: always
+    ports:
+      - 7480:7480
+    environment:
+      RGW_DEFAULT_USER_ACCESS_KEY: s3hello
+      RGW_DEFAULT_USER_SECRET_KEY: s3hello
+      RGW_DEFAULT_USER_EMAIL: s3gw@vbarbarosh.com
+      RGW_DEFAULT_USER_ID: fofofo
+      RGW_DEFAULT_USER_DISPLAY_NAME: bababa
+      #  {
+      #    item: {
+      #      Key: '/file2.txt',
+      #      LastModified: 2025-06-12T03:59:34.385Z,
+      #      ETag: '"766bdecc2b9a4eddc9c575902dab7b13"',
+      #      Size: 27,
+      #      StorageClass: 'STANDARD'
+      #    },
+      #    tags: [],
+      #    acl: [{"Grantee":{"DisplayName":"bababa","ID":"fofofo","Type":"CanonicalUser"},"Permission":"FULL_CONTROL"}]
+      #  }
+    volumes:
+      - ./data:/data
+
+  s3gw-ui:
+    image: quay.io/s3gw/s3gw-ui
+    restart: always
+    ports:
+      - 8080:8080
+    environment:
+      S3GW_SERVICE_URL: http://s3gw:7480

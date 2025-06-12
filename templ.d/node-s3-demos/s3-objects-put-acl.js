@@ -12,10 +12,10 @@ async function main()
     const time0 = perf_start();
 
     const s3 = new aws.S3Client({
-        endpoint: 'http://localhost:9000',
+        endpoint: 'http://localhost:7480',
         credentials: {
-            accessKeyId: 'minioadmin',
-            secretAccessKey: 'minioadmin',
+            accessKeyId: 's3hello',
+            secretAccessKey: 's3hello',
         },
         forcePathStyle: true,
         signatureVersion: 'v4',
@@ -25,30 +25,24 @@ async function main()
 
     const response = await s3.send(new aws.PutObjectCommand({
         Bucket: 'hello',
-        Key: 'tags/public.txt',
+        Key: 'public.txt',
         Body: 'hello',
         ContentType: 'text/plain',
-        Tagging: 'public=true&foo=bar&user=foo',
-        Metadata: { 'x-amz-meta-public': 'true' },
+        ACL: 'public-read',
     }));
     console.log(response);
 
     const response2 = await s3.send(new aws.PutObjectCommand({
         Bucket: 'hello',
-        Key: 'tags/private.txt',
+        Key: 'private.txt',
         Body: 'hello',
         ContentType: 'text/plain',
-        Tagging: {
-            TagSet: [
-                { Key: 'foo', Value: '555' }
-            ]
-        },
     }));
     console.log(response2);
 
     console.log();
-    console.log('http://localhost:9000/hello/tags/public.txt');
-    console.log('http://localhost:9000/hello/tags/private.txt');
+    console.log('http://localhost:7480/hello/public.txt');
+    console.log('http://localhost:7480/hello/private.txt');
     console.log();
 
     console.log(`🎉 Done in ${perf_end_human(time0)}`);
