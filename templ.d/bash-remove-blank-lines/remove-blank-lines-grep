@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+urls='
+https://www.example.com
+https://api.github.com/users/octocat
+https://randomuser.me/api/
+https://httpbin.org/get
+https://jsonplaceholder.typicode.com/posts/1
+https://www.google.com/search?q=bash+scripting
+https://en.wikipedia.org/wiki/Bash_(Unix_shell)
+https://www.reddit.com/r/commandline/
+https://stackoverflow.com/questions/tagged/bash
+https://www.linux.org/pages/download/
+'
+
+echo "$urls" | grep -v ^$
