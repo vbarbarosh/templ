@@ -41,10 +41,10 @@ describe('escape_shell_arg', function () {
     });
 });
 
-function escape_shell_arg(v)
+function escape_shell_arg(s)
 {
-    if (v.match(/^[0-9a-z@_+%-]+$/i)) {
-        return v;
+    if (s.match(/^[0-9a-z@_+%-]+$/i)) {
+        return s;
     }
-    return `'${v.replace(/'/g, "'\\'")}'`;
+    return `'${s.replace(/'/g, "'\\'")}'`;
 }
