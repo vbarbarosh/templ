@@ -2,7 +2,7 @@
 
 const assert = require('assert');
 
-const items = [
+const tests = [
     ["''", ''],
     ['1', '1'],
     ['a', 'a'],
@@ -34,7 +34,7 @@ const items = [
 ];
 
 describe('escape_shell_arg', function () {
-    items.forEach(function ([expected, ...args]) {
+    tests.forEach(function ([expected, ...args]) {
         it(`${args} → ${expected}`, function () {
             assert.equal(expected, escape_shell_arg(...args));
         });
