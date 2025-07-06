@@ -30,6 +30,11 @@ async function main()
     const app = express();
     const upload = multer({storage: multer.memoryStorage()});
 
+    await fs_mkdirp(`${__dirname}/../data/logs`);
+    await fs_mkdirp(`${__dirname}/../data/notes`);
+    await fs_mkdirp(`${__dirname}/../data/thumbnails`);
+    await fs_mkdirp(`${__dirname}/../data/trash-bin`);
+
     app.use(express_log({
         file: () => `${__dirname}/../data/logs/http-${new Date().toJSON().substring(0, 10)}.log`,
     }));
@@ -42,6 +47,7 @@ async function main()
     express_routes(app, [
         {req: 'GET /', fn: echo},
         {req: 'GET /r/*', fn: data_fetch},
+        {req: 'GET /t/*', fn: thumbnail},
         {req: 'GET /api/v1/notes.json', fn: notes_list},
         {req: 'POST /api/v1/notes', fn: notes_create},
         {req: 'DELETE /api/v1/notes/:note_uid', fn: notes_remove},
@@ -74,6 +80,25 @@ async function data_fetch(req, res)
     res.sendFile(fs_path_resolve(`${__dirname}/../data/notes/${path}`));
 }
 
+async function thumbnail(req, res)
+{
+    const path = req.params['0'];
+    if (!path || path.includes('..')) {
+        res.status(400).send('Invalid path');
+        return;
+    }
+
+    const image_file = fs_path_resolve(`${__dirname}/../data/notes/${path}`);
+    if (!await fs_exists(image_file)) {
+        res.status(404).send('Not Found');
+        return;
+    }
+
+    const meta = await sharp(image_file).metadata();
+    const buf = await sharp(image_file).resize(200).toBuffer();
+    res.type(meta.format).send(buf);
+}
+
 async function notes_list(req, res)
 {
     const d = `${__dirname}/../data/notes`;
@@ -91,7 +116,8 @@ async function notes_list(req, res)
             await Promise.map(tmp, async function (file) {
                 const lstat = await fs_lstat(`${d}/${name}/files/${file}`);
                 const url = `/r/${name}/files/${file}`;
-                const thumbnail_url = await is_image(`${d}/${name}/files/${file}`) ? url : null;
+                const thumbnail_url = await is_image(`${d}/${name}/files/${file}`)
+                    ? `/t/${name}/files/${file}` : null;
                 files.push({
                     name: file,
                     url,
@@ -207,7 +233,8 @@ async function notes_upload_file(req, res)
     const lstat = await fs_lstat(file_path);
     const name = fs_path_basename(file_path);
     const url = `/r/${name}/files/${file}`;
-    const thumbnail_url = await is_image(`${d}/${name}/files/${file}`) ? url : null;
+    const thumbnail_url = await is_image(`${d}/${name}/files/${file}`)
+        ? `/t/${name}/files/${file}` : null ;
     res.send({
         name,
         url,
