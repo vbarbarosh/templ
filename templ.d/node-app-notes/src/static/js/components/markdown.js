@@ -6,7 +6,7 @@ app.component('markdown', {
         <div class="markdown"><component ref="component" v-bind:is="spec" v-bind:key="html" /></div>
     `,
     data: function () {
-        const md = Vue.markRaw(markdownit({html: true}));
+        const md = Vue.markRaw(markdownit({html: true, linkify: true}));
 
         md.use(function (md) {
             const defaultImage = md.renderer.rules.image || function(tokens, idx, options, env, self) {
@@ -57,6 +57,10 @@ html`
 `;
 
 css`
+    .markdown {
+        margin-top: 1.5em;
+        margin-bottom: 1.5em;
+    }
     .markdown img {
         max-width: 400px;
         max-height: 400px;
