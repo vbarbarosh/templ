@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
-require('@dotenvx/dotenvx').config();
+require('@dotenvx/dotenvx').config({path: `${__dirname}/.env`});
 
 const body_parser = require('body-parser');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
 const express = require('express');
+const express_log = require('@vbarbarosh/express-helpers/src/express_log');
 const express_params = require('@vbarbarosh/express-helpers/src/express_params');
 const express_routes = require('@vbarbarosh/express-helpers/src/express_routes');
 const express_run = require('@vbarbarosh/express-helpers/src/express_run');
@@ -17,6 +18,10 @@ cli(main);
 async function main()
 {
     const app = express();
+
+    app.use(express_log({
+        file: () => fs_path_resolve(__dirname, `../data/logs/http-${new Date().toJSON().substring(0, 10)}.log`),
+    }));
 
     app.use(express.static(fs_path_resolve(__dirname, 'static')));
     app.use(body_parser.json());
