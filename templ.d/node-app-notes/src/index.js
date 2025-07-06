@@ -166,8 +166,8 @@ async function notes_remove_file(req, res)
     const source = `${d}/notes/${note_uid}/files/${filename}`;
     const target = `${d}/trash-bin/${now_fs()}-${note_uid}-files/${filename}`;
 
-    if (!await fs_exists(`${d}/${note_uid}/files`)) {
-        res.status(404, 'File Not Found');
+    if (!await fs_exists(source)) {
+        res.status(404, 'File Not Found').send();
         return;
     }
 
