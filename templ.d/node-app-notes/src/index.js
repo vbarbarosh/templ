@@ -99,6 +99,11 @@ async function thumbnail(req, res)
     }
 
     const meta = await sharp(image_file).metadata();
+    if (meta.format === 'svg') {
+        res.type('svg').sendFile(image_file);
+        return;
+    }
+
     const buf = await sharp(image_file).resize(200).toBuffer();
     res.type(meta.format).send(buf);
 }
