@@ -53,6 +53,7 @@ async function main()
         {req: 'GET /r/*', fn: data_fetch},
         {req: 'GET /t/*', fn: thumbnail},
         {req: 'GET /api/v1/notes.json', fn: notes_list},
+        {req: 'GET /api/v1/notes/:note_uid', fn: notes_fetch},
         {req: 'POST /api/v1/notes', fn: notes_create},
         {req: 'DELETE /api/v1/notes/:note_uid', fn: notes_remove},
         {req: 'DELETE /api/v1/notes/:note_uid/files/*', fn: notes_remove_file},
@@ -112,41 +113,100 @@ async function notes_list(req, res)
 {
     const d = `${__dirname}/../data/notes`;
     const names = await fs_readdir(d);
-    const items = [];
-    await Promise.all(names.map(async function (name) {
-        const lstat = await fs_lstat(`${d}/${name}`);
-        let i = name.indexOf('-');
-        if (i === -1) {
-            i = name.length;
-        }
-        const files = [];
-        if (await fs_exists(`${d}/${name}/files`)) {
-            await fs_walk(`${d}/${name}/files`, async function (lstat, path) {
-                const url = `/r/${name}/files/${path}`;
-                const thumbnail_url = await is_image(`${d}/${name}/files/${path}`)
-                    ? `/t/${name}/files/${path}` : null;
-                files.push({
-                    path,
-                    url,
-                    thumbnail_url,
-                    size: lstat.size,
-                });
-            });
-        }
-        files.sort(function (a, b) {
-            return (str_count(b.path, '/') - str_count(a.path, '/')) || fcmp_strings_ascii(a.path, b.path);
-        });
-        items.push({
-            uid: name.slice(0, i),
-            name: name.slice(i + 1),
-            body: await fs_read_utf8(`${d}/${name}/README.md`),
-            prefix: `/r/${name}/`,
-            files,
-            created_at: lstat.birthtime,
-            updated_at: lstat.ctime,
-        });
-    }));
+    const items = await Promise.all(names.map(read_note));
+
+    // await Promise.all(names.map(async function (name) {
+    //     const lstat = await fs_lstat(`${d}/${name}`);
+    //     let i = name.indexOf('-');
+    //     if (i === -1) {
+    //         i = name.length;
+    //     }
+    //     const files = [];
+    //     if (await fs_exists(`${d}/${name}/files`)) {
+    //         await fs_walk(`${d}/${name}/files`, async function (lstat, path) {
+    //             const url = `/r/${name}/files/${path}`;
+    //             const thumbnail_url = await is_image(`${d}/${name}/files/${path}`)
+    //                 ? `/t/${name}/files/${path}` : null;
+    //             files.push({
+    //                 path,
+    //                 url,
+    //                 thumbnail_url,
+    //                 size: lstat.size,
+    //             });
+    //         });
+    //     }
+    //     files.sort(function (a, b) {
+    //         return (str_count(b.path, '/') - str_count(a.path, '/')) || fcmp_strings_ascii(a.path, b.path);
+    //     });
+    //     items.push({
+    //         uid: name.slice(0, i),
+    //         name: name.slice(i + 1),
+    //         body: await fs_read_utf8(`${d}/${name}/README.md`),
+    //         prefix: `/r/${name}/`,
+    //         files,
+    //         created_at: lstat.birthtime,
+    //         updated_at: lstat.ctime,
+    //     });
+    // }));
     res.send({items: items.sort((b, a) => fcmp_strings_ascii(a.uid, b.uid))});
+}
+
+// GET /api/v1/notes/:note_uid
+async function notes_fetch(req, res)
+{
+    const note_root_name = await resolve_note_root_name(req.params.note_uid);
+    const note = await read_note(note_root_name);
+    res.send(note);
+}
+
+async function resolve_note_root_name(note_uid)
+{
+    const d = `${__dirname}/../data/notes`;
+    const names = await fs_readdir(d);
+    const out = names.find(name => name.startsWith(note_uid));
+    if (out) {
+        return out;
+    }
+    throw new Error(`Not found ${note_uid}`);
+}
+
+async function read_note(note_root_name)
+{
+    const d = `${__dirname}/../data/notes`;
+    const lstat = await fs_lstat(`${d}/${note_root_name}`);
+
+    let i = note_root_name.indexOf('-');
+    if (i === -1) {
+        i = note_root_name.length;
+    }
+
+    const files = [];
+    if (await fs_exists(`${d}/${note_root_name}/files`)) {
+        await fs_walk(`${d}/${note_root_name}/files`, async function (lstat, path) {
+            const url = `/r/${note_root_name}/files/${path}`;
+            const thumbnail_url = await is_image(`${d}/${note_root_name}/files/${path}`)
+                ? `/t/${note_root_name}/files/${path}` : null;
+            files.push({
+                path,
+                url,
+                thumbnail_url,
+                size: lstat.size,
+            });
+        });
+    }
+    files.sort(function (a, b) {
+        return (str_count(b.path, '/') - str_count(a.path, '/')) || fcmp_strings_ascii(a.path, b.path);
+    });
+
+    return {
+        uid: note_root_name.slice(0, i),
+        name: note_root_name.slice(i + 1),
+        body: await fs_read_utf8(`${d}/${note_root_name}/README.md`),
+        prefix: `/r/${note_root_name}/`,
+        files,
+        created_at: lstat.birthtime,
+        updated_at: lstat.ctime,
+    };
 }
 
 async function fs_walk(root, callback)

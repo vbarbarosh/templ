@@ -3,6 +3,11 @@ async function api_notes_list(filters)
     return http_get_json(urlmod('/api/v1/notes.json', filters));
 }
 
+async function api_notes_fetch(note_uid)
+{
+    return http_get_json(`/api/v1/notes/${note_uid}`);
+}
+
 async function api_notes_create({body})
 {
     return http_post_json('/api/v1/notes', {body});

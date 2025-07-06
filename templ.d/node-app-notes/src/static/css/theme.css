@@ -14,7 +14,8 @@ body {
     transition: box-shadow 0.15s, border-color 0.15s;
 }
 
-.note-card:hover {
+.note-card:hover,
+.note-card.active {
     box-shadow: 0 4px 18px #abb9ee6e;
     border-color: #9da9db;
 }
