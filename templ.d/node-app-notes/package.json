@@ -11,5 +11,8 @@
     "express": "^4.21.2",
     "multer": "^2.0.1",
     "sharp": "^0.34.2"
+  },
+  "devDependencies": {
+    "mocha": "^11.7.1"
   }
 }

@@ -480,3 +480,31 @@ function array_index(items, fn)
 {
     return Object.fromEntries(items.map(v => [fn(v), v]));
 }
+
+async function get_event_files(event, options = {})
+{
+    const limit = options.limit ?? Number.MAX_SAFE_INTEGER;
+    if (!event.dataTransfer) {
+        return Array.from(event.target.files).slice(0, limit).map(function (file) {
+            file.fullPath ??= '/' + (file.webkitRelativePath ?? file.name);
+            return file;
+        });
+    }
+    const out = [];
+    const buf = Array.from(event.dataTransfer.items).map(v => v.webkitGetAsEntry());
+    while (buf.length) {
+        const entry = buf.pop();
+        if (entry.isFile) {
+            const file = await new Promise((resolve, reject) => entry.file(resolve, reject));
+            file.fullPath = entry.fullPath;
+            out.push(file);
+            if (out.length >= limit) {
+                break;
+            }
+        }
+        else if (entry.isDirectory) {
+            buf.push(...await new Promise((resolve, reject) => entry.createReader().readEntries(resolve, reject)));
+        }
+    }
+    return out;
+}

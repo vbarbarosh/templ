@@ -18,6 +18,7 @@ const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
 const fs_read_utf8 = require('@vbarbarosh/node-helpers/src/fs_read_utf8');
 const fs_readdir = require('@vbarbarosh/node-helpers/src/fs_readdir');
 const fs_rename = require('@vbarbarosh/node-helpers/src/fs_rename');
+const fs_sanitize_relative_resolve = require('./helpers/fs_sanitize_relative_resolve');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const multer = require('multer');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
@@ -28,7 +29,10 @@ cli(main);
 async function main()
 {
     const app = express();
-    const upload = multer({storage: multer.memoryStorage()});
+    const upload = multer({
+        preservePath: true,
+        storage: multer.memoryStorage(),
+    });
 
     await fs_mkdirp(`${__dirname}/../data/logs`);
     await fs_mkdirp(`${__dirname}/../data/notes`);
@@ -112,20 +116,21 @@ async function notes_list(req, res)
         }
         const files = [];
         if (await fs_exists(`${d}/${name}/files`)) {
-            const tmp = await fs_readdir(`${d}/${name}/files`);
-            await Promise.map(tmp, async function (file) {
-                const lstat = await fs_lstat(`${d}/${name}/files/${file}`);
-                const url = `/r/${name}/files/${file}`;
-                const thumbnail_url = await is_image(`${d}/${name}/files/${file}`)
-                    ? `/t/${name}/files/${file}` : null;
+            await fs_walk(`${d}/${name}/files`, async function (lstat, path) {
+                const url = `/r/${name}/files/${path}`;
+                const thumbnail_url = await is_image(`${d}/${name}/files/${path}`)
+                    ? `/t/${name}/files/${path}` : null;
                 files.push({
-                    name: file,
+                    path,
                     url,
                     thumbnail_url,
                     size: lstat.size,
                 });
             });
         }
+        files.sort(function (a, b) {
+            return (str_count(b.path, '/') - str_count(a.path, '/')) || fcmp_strings_ascii(a.path, b.path);
+        });
         items.push({
             uid: name.slice(0, i),
             name: name.slice(i + 1),
@@ -137,6 +142,23 @@ async function notes_list(req, res)
         });
     }));
     res.send({items: items.sort((b, a) => fcmp_strings_ascii(a.uid, b.uid))});
+}
+
+async function fs_walk(root, callback)
+{
+    const lifo = [];
+    lifo.push('');
+    while (lifo.length > 0) {
+        const name1 = lifo.pop();
+        const lstat = await fs_lstat(`${root}/${name1}`);
+        if (lstat.isDirectory()) {
+            const names = await fs_readdir(`${root}/${name1}`);
+            names.forEach(name2 => lifo.push(`${name1}/${name2}`));
+        }
+        else {
+            await callback(lstat, name1.slice(1));
+        }
+    }
 }
 
 async function notes_create(req, res)
@@ -220,7 +242,7 @@ async function notes_upload_file(req, res)
         return;
     }
 
-    const file_path = fs_path_resolve(d, 'files', sanitize_filename(file.originalname));
+    const file_path = fs_sanitize_relative_resolve(fs_path_resolve(d, 'files'), file.originalname);
 
     if (await fs_exists(file_path)) {
         res.status(409).send('File Already Exists');
@@ -271,4 +293,9 @@ async function is_image(buf)
 function fcmp_strings_ascii(a, b)
 {
     return a < b ? -1 : a > b ? 1 : 0;
+}
+
+function str_count(str, ch)
+{
+    return str.split(ch).length - 1;
 }
