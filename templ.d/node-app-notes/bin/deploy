@@ -10,4 +10,5 @@ scriptname=`basename $script`
 
 cd $scriptdir/..
 
-docker build -t node-app-notes -t vbarbarosh/node-app-notes .
+bin/build
+docker push vbarbarosh/node-app-notes

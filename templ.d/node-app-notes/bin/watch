@@ -10,4 +10,4 @@ scriptname=`basename $script`
 
 cd $scriptdir/..
 
-docker build -t node-app-notes -t vbarbarosh/node-app-notes .
+nodemon src/index.js

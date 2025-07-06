@@ -5,12 +5,14 @@ const amx = require('@vbarbarosh/express-helpers/src/amx');
 const body_parser = require('body-parser');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
 const express = require('express');
+const express_log = require('@vbarbarosh/express-helpers/src/express_log');
 const express_params = require('@vbarbarosh/express-helpers/src/express_params');
 const express_routes = require('@vbarbarosh/express-helpers/src/express_routes');
 const express_run = require('@vbarbarosh/express-helpers/src/express_run');
 const fs_exists = require('@vbarbarosh/node-helpers/src/fs_exists');
 const fs_lstat = require('@vbarbarosh/node-helpers/src/fs_lstat');
 const fs_mkdirp = require('@vbarbarosh/node-helpers/src/fs_mkdirp');
+const fs_path_basename = require('@vbarbarosh/node-helpers/src/fs_path_basename');
 const fs_path_dirname = require('@vbarbarosh/node-helpers/src/fs_path_dirname');
 const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
 const fs_read_utf8 = require('@vbarbarosh/node-helpers/src/fs_read_utf8');
@@ -20,7 +22,6 @@ const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const multer = require('multer');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
 const sharp = require('sharp');
-const fs_path_basename = require('@vbarbarosh/node-helpers/src/fs_path_basename');
 
 cli(main);
 
@@ -28,6 +29,10 @@ async function main()
 {
     const app = express();
     const upload = multer({storage: multer.memoryStorage()});
+
+    app.use(express_log({
+        file: () => `${__dirname}/../data/logs/http-${new Date().toJSON().substring(0, 10)}.log`,
+    }));
 
     app.use(express.static(fs_path_resolve(__dirname, 'static')));
     app.use(body_parser.json());
@@ -66,22 +71,16 @@ async function data_fetch(req, res)
         return;
     }
 
-    res.sendFile(fs_path_resolve(`${__dirname}/../data/${path}`));
+    res.sendFile(fs_path_resolve(`${__dirname}/../data/notes/${path}`));
 }
 
 async function notes_list(req, res)
 {
-    const d = `${__dirname}/../data`;
+    const d = `${__dirname}/../data/notes`;
     const names = await fs_readdir(d);
     const items = [];
     await Promise.all(names.map(async function (name) {
-        if (name === 'trash-bin') {
-            return null;
-        }
         const lstat = await fs_lstat(`${d}/${name}`);
-        if (!lstat.isDirectory()) {
-            return null;
-        }
         let i = name.indexOf('-');
         if (i === -1) {
             i = name.length;
@@ -121,7 +120,7 @@ async function notes_create(req, res)
 
     const uid = now_fs();
     const dir_name = uid;
-    const dir_path = fs_path_resolve(__dirname, '..', 'data', dir_name);
+    const dir_path = fs_path_resolve(__dirname, '..', 'data', 'notes', dir_name);
 
     await fs_mkdirp(dir_path);
     await fs_write(`${dir_path}/README.md`, body);
@@ -135,7 +134,7 @@ async function notes_update(req, res)
     const note_uid = req.params.note_uid;
     const body = req.body.body.toString().trim() + '\n';
 
-    const d = fs_path_resolve(__dirname, '..', 'data', note_uid);
+    const d = fs_path_resolve(__dirname, '..', 'data', 'notes', note_uid);
 
     if (!await fs_exists(`${d}/README.md`)) {
         res.status(404).send('Note not found');
@@ -152,7 +151,7 @@ async function notes_remove(req, res)
     const note_uid = req.params.note_uid;
 
     const d = `${__dirname}/../data`;
-    await fs_rename(`${d}/${note_uid}`, `${d}/trash-bin/${now_fs()}-${note_uid}`);
+    await fs_rename(`${d}/notes/${note_uid}`, `${d}/trash-bin/${now_fs()}-${note_uid}`);
 
     res.send();
 }
@@ -163,7 +162,7 @@ async function notes_remove_file(req, res)
     const note_uid = req.params.note_uid;
     const filename = sanitize_filename(req.params.filename);
 
-    const d = `${__dirname}/../data`;
+    const d = `${__dirname}/../data/notes`;
     const source = `${d}/${note_uid}/files/${filename}`;
     const target = `${d}/trash-bin/${now_fs()}-${note_uid}-files/${filename}`;
 
@@ -189,7 +188,7 @@ async function notes_upload_file(req, res)
         return;
     }
 
-    const d = fs_path_resolve(__dirname, '..', 'data', note_uid);
+    const d = fs_path_resolve(__dirname, '..', 'data', 'notes', note_uid);
     if (!await fs_exists(d)) {
         res.status(404).send('Note Not Found');
         return;
