@@ -183,7 +183,7 @@ const app = Vue.createApp({
             const elem = event.currentTarget;
             await navigator.clipboard.writeText(note.body);
             elem.classList.add('copied');
-            await Promise.delay(500);
+            await Promise.delay(900);
             elem.classList.remove('copied');
         },
         click_h2_paste: async function (note) {
