@@ -2,7 +2,8 @@
   "name": "node-app-notes",
   "version": "0.0.0",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "test": "mocha src/**/*.test.js"
   },
   "dependencies": {
     "@vbarbarosh/express-helpers": "^2.2.1",
