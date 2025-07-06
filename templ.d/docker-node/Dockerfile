@@ -28,6 +28,8 @@ WORKDIR /app
 COPY --chown=node:node package*.json /app
 RUN npm install
 
+ENV LISTEN=0.0.0.0
+
 COPY --chown=node:node . /app
 ENTRYPOINT ["/usr/bin/dumb-init", "--"]
 CMD ["npm", "start"]
