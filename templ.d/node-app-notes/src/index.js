@@ -15,13 +15,13 @@ const fs_mkdirp = require('@vbarbarosh/node-helpers/src/fs_mkdirp');
 const fs_path_basename = require('@vbarbarosh/node-helpers/src/fs_path_basename');
 const fs_path_dirname = require('@vbarbarosh/node-helpers/src/fs_path_dirname');
 const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
+const fs_path_safe_relative = require('./helpers/fs_path_safe_relative');
+const fs_path_safe_resolve = require('./helpers/fs_path_safe_resolve');
 const fs_read_utf8 = require('@vbarbarosh/node-helpers/src/fs_read_utf8');
 const fs_readdir = require('@vbarbarosh/node-helpers/src/fs_readdir');
 const fs_rename = require('@vbarbarosh/node-helpers/src/fs_rename');
-const fs_sanitize_relative_resolve = require('./helpers/fs_sanitize_relative_resolve');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
 const multer = require('multer');
-const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
 const sharp = require('sharp');
 
 cli(main);
@@ -55,7 +55,7 @@ async function main()
         {req: 'GET /api/v1/notes.json', fn: notes_list},
         {req: 'POST /api/v1/notes', fn: notes_create},
         {req: 'DELETE /api/v1/notes/:note_uid', fn: notes_remove},
-        {req: 'DELETE /api/v1/notes/:note_uid/files/:filename', fn: notes_remove_file},
+        {req: 'DELETE /api/v1/notes/:note_uid/files/*', fn: notes_remove_file},
         {req: 'PATCH /api/v1/notes/:note_uid', fn: notes_update},
         {req: 'ALL *', fn: page404},
     ]);
@@ -204,15 +204,16 @@ async function notes_remove(req, res)
     res.send();
 }
 
-// DELETE /api/v1/notes/:note_uid/files/:filename
+// DELETE /api/v1/notes/:note_uid/files/*
 async function notes_remove_file(req, res)
 {
     const note_uid = req.params.note_uid;
-    const filename = sanitize_filename(req.params.filename);
 
     const d = `${__dirname}/../data`;
-    const source = `${d}/notes/${note_uid}/files/${filename}`;
-    const target = `${d}/trash-bin/${now_fs()}-${note_uid}-files/${filename}`;
+    const path = fs_path_safe_resolve(`${d}/notes/${note_uid}/files`, req.params[0]);
+    const relative = fs_path_safe_relative(`${d}/notes/${note_uid}/files`, path);
+    const source = `${d}/notes/${note_uid}/files/${relative}`;
+    const target = `${d}/trash-bin/${now_fs()}-${note_uid}/files/${relative}`;
 
     if (!await fs_exists(source)) {
         res.status(404, 'File Not Found').send();
@@ -242,7 +243,7 @@ async function notes_upload_file(req, res)
         return;
     }
 
-    const file_path = fs_sanitize_relative_resolve(fs_path_resolve(d, 'files'), file.originalname);
+    const file_path = fs_path_safe_resolve(fs_path_resolve(d, 'files'), file.originalname);
 
     if (await fs_exists(file_path)) {
         res.status(409).send('File Already Exists');

@@ -1,5 +1,5 @@
 const assert = require('assert');
-const fs_sanitize_relative_resolve = require('./fs_sanitize_relative_resolve');
+const fs_path_safe_resolve = require('./fs_path_safe_resolve');
 
 const tests = [
     // Basic usage
@@ -7,6 +7,10 @@ const tests = [
     {root: '/foo', path: 'bar', expected: '/foo/bar'},
     {root: '/foo', path: '/bar', expected: '/foo/bar'},
     {root: '/foo', path: '/bar/baz', expected: '/foo/bar/baz'},
+    {root: '/foo/', path: '', expected: '/foo/'},
+    {root: '/foo/', path: 'bar', expected: '/foo/bar'},
+    {root: '/foo/', path: '/bar', expected: '/foo/bar'},
+    {root: '/foo/', path: '/bar/baz', expected: '/foo/bar/baz'},
 
     // Leading dots are removed, multiple dots
     {root: '/foo', path: './bar', expected: '/foo/bar'},
@@ -33,7 +37,7 @@ const tests = [
 describe('fs_sanitize_relative_resolve', function () {
     tests.forEach(function (test) {
         it(`${test.root} + ${test.path} → ${test.expected}`, function () {
-            const actual = fs_sanitize_relative_resolve(test.root, test.path);
+            const actual = fs_path_safe_resolve(test.root, test.path);
             assert.equal(actual, test.expected);
         });
     });
