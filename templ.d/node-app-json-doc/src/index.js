@@ -21,10 +21,10 @@ async function main()
     const app = express();
 
     await fs_mkdirp(fs_path_resolve(__dirname, '../data/db'));
-    await fs_mkdirp(fs_path_resolve(__dirname, '../data/log'));
+    await fs_mkdirp(fs_path_resolve(__dirname, '../data/logs'));
 
     app.use(express_log({
-        file: () => fs_path_resolve(__dirname, `../data/log/http-${new Date().toJSON().substring(0, 10)}.log`),
+        file: () => fs_path_resolve(__dirname, `../data/logs/http-${new Date().toJSON().substring(0, 10)}.log`),
     }));
     app.use(body_parser.json());
     app.use(cors());
