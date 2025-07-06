@@ -1,0 +1,15 @@
+{
+  "name": "node-app-notes",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "@vbarbarosh/express-helpers": "^2.2.1",
+    "@vbarbarosh/node-helpers": "^3.65.0",
+    "body-parser": "^2.2.0",
+    "express": "^4.21.2",
+    "multer": "^2.0.1",
+    "sharp": "^0.34.2"
+  }
+}

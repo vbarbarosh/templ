@@ -1,0 +1,8 @@
+services:
+  node-app-notes:
+    image: node-app-notes
+    restart: always
+    ports:
+      - '3000:3000'
+    volumes:
+      - ./data:/app/data
