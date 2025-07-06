@@ -1,0 +1,7 @@
+services:
+  app:
+    image: vbarbarosh/node-app-dev-proxy
+    ports:
+      - 3000:3000
+    volumes:
+      - ./data:/app/data
