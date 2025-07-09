@@ -32,9 +32,6 @@ async function main()
     const upload = multer({
         preservePath: true,
         storage: multer.memoryStorage(),
-        limits: {
-            fileSize: 200*1024*1024,
-        },
     });
 
     await fs_mkdirp(`${__dirname}/../data/logs`);
