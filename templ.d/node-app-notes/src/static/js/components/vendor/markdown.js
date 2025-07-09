@@ -72,7 +72,10 @@ css`
     .markdown {
         margin-top: 1.5em;
         margin-bottom: 1.5em;
+        font-size: 14px;
+        line-height: 1.5em;
     }
+
     .markdown img {
         max-width: 400px;
         max-height: 400px;
