@@ -9,7 +9,7 @@ const express_log = require('@vbarbarosh/express-helpers/src/express_log');
 const express_params = require('@vbarbarosh/express-helpers/src/express_params');
 const express_routes = require('@vbarbarosh/express-helpers/src/express_routes');
 const express_run = require('@vbarbarosh/express-helpers/src/express_run');
-const fs_path_resolve = require('@vbarbarosh/node-helpers/src/fs_path_resolve');
+const fs_mkdirp = require('@vbarbarosh/node-helpers/src/fs_mkdirp');
 
 // A basic template for node express apps
 
@@ -19,11 +19,13 @@ async function main()
 {
     const app = express();
 
+    await fs_mkdirp(`${__dirname}/../data/logs`);
+
     app.use(express_log({
-        file: () => fs_path_resolve(__dirname, `../data/logs/http-${new Date().toJSON().substring(0, 10)}.log`),
+        file: () => `${__dirname}/../data/logs/http-${new Date().toJSON().substring(0, 10)}.log`,
     }));
 
-    app.use(express.static(fs_path_resolve(__dirname, 'static')));
+    app.use(express.static(`${__dirname}/static`));
     app.use(body_parser.json());
 
     express_routes(app, [
