@@ -1,4 +1,4 @@
-A rudimentary notes taking app.
+A rudimentary note-taking app.
 
 Allows creating, editing, removing and listing notes.
 
