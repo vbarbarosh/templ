@@ -1,7 +1,7 @@
 https://docs.aws.amazon.com/sdk-for-javascript/v2/developer-guide/s3-node-examples.html
 
-Minio does not support ACL: public-read with private buckets they S3 does.
-The solution is to use tag-based bucket policy.
+Minio does not support `ACL: public-read` with private buckets they way S3 does.
+The solution is to use *tag-based bucket policy*.
 
 ```javascript
 const Bucket = 'hello';
