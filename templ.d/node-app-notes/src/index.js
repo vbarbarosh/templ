@@ -21,6 +21,7 @@ const fs_read_utf8 = require('@vbarbarosh/node-helpers/src/fs_read_utf8');
 const fs_readdir = require('@vbarbarosh/node-helpers/src/fs_readdir');
 const fs_rename = require('@vbarbarosh/node-helpers/src/fs_rename');
 const fs_write = require('@vbarbarosh/node-helpers/src/fs_write');
+const make = require('@vbarbarosh/type-helpers');
 const multer = require('multer');
 const sharp = require('sharp');
 
@@ -51,7 +52,7 @@ async function main()
     express_routes(app, [
         {req: 'GET /', fn: echo},
         {req: 'GET /r/*', fn: data_fetch},
-        {req: 'GET /t/*', fn: thumbnail},
+        {req: 'GET /t/:size/*', fn: thumbnail},
         {req: 'GET /api/v1/notes.json', fn: notes_list},
         {req: 'GET /api/v1/notes/:note_uid', fn: notes_fetch},
         {req: 'POST /api/v1/notes', fn: notes_create},
@@ -87,7 +88,9 @@ async function data_fetch(req, res)
 
 async function thumbnail(req, res)
 {
-    const path = req.params['0'];
+    const size = make(req.params.size, {type: 'int', min: 32, max: 2048, default: 1024});
+    const path = make(req.params['0'], {type: 'str', default: ''});
+
     if (!path || path.includes('..')) {
         res.status(400).send('Invalid path');
         return;
@@ -105,7 +108,7 @@ async function thumbnail(req, res)
         return;
     }
 
-    const buf = await sharp(image_file).resize(200).toBuffer();
+    const buf = await sharp(image_file).resize(size).toBuffer();
     res.type(meta.format).send(buf);
 }
 
@@ -126,7 +129,7 @@ async function notes_list(req, res)
     //         await fs_walk(`${d}/${name}/files`, async function (lstat, path) {
     //             const url = `/r/${name}/files/${path}`;
     //             const thumbnail_url = await is_image(`${d}/${name}/files/${path}`)
-    //                 ? `/t/${name}/files/${path}` : null;
+    //                 ? `/t/1024/${name}/files/${path}` : null;
     //             files.push({
     //                 path,
     //                 url,
@@ -185,7 +188,7 @@ async function read_note(note_root_name)
         await fs_walk(`${d}/${note_root_name}/files`, async function (lstat, path) {
             const url = `/r/${note_root_name}/files/${path}`;
             const thumbnail_url = await is_image(`${d}/${note_root_name}/files/${path}`)
-                ? `/t/${note_root_name}/files/${path}` : null;
+                ? `/t/1024/${note_root_name}/files/${path}` : null;
             files.push({
                 path,
                 url,
@@ -322,7 +325,7 @@ async function notes_upload_file(req, res)
     const name = fs_path_basename(file_path);
     const url = `/r/${name}/files/${file}`;
     const thumbnail_url = await is_image(`${d}/${name}/files/${file}`)
-        ? `/t/${name}/files/${file}` : null ;
+        ? `/t/1024/${name}/files/${file}` : null ;
     res.send({
         name,
         url,

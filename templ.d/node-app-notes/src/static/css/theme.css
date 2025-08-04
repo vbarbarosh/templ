@@ -70,8 +70,6 @@ img.checkerboard {
     border: 1px solid #c7cde2;
     box-shadow: 0 1px 7px #bfc2db60;
     background: repeating-conic-gradient(#e6eafd 0% 25%, #f6f7fb 0% 50%) 50% / 20px 20px;
-    max-width: 100px;
-    max-height: 100px;
     object-fit: contain;
 }
 
