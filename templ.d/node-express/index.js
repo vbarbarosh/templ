@@ -10,6 +10,7 @@ const express_params = require('@vbarbarosh/express-helpers/src/express_params')
 const express_routes = require('@vbarbarosh/express-helpers/src/express_routes');
 const express_run = require('@vbarbarosh/express-helpers/src/express_run');
 const fs_mkdirp = require('@vbarbarosh/node-helpers/src/fs_mkdirp');
+const make = require('@vbarbarosh/type-helpers/src/make');
 
 // A basic template for node express apps
 
@@ -30,6 +31,7 @@ async function main()
 
     express_routes(app, [
         {req: 'GET /', fn: echo},
+        {req: 'GET /t/:size/*', fn: thumbnail},
         {req: 'GET /api/v1/articles.json', fn: route_articles_list},
         {req: 'POST /api/v1/articles', fn: route_articles_create},
         {req: 'DELETE /api/v1/articles/:article_uid', fn: route_articles_delete},
@@ -82,6 +84,14 @@ async function route_articles_replace(req, res)
 async function echo(req, res)
 {
     res.status(200).send(express_params(req));
+}
+
+async function thumbnail(req, res)
+{
+    const size = make(req.params.size, {type: 'int', min: 32, max: 2048, default: 1024});
+    const path = make(req.params['0'], {type: 'str', default: ''});
+
+    res.status(200).send({size, path, express_params: express_params(req)});
 }
 
 async function page404(req, res)
