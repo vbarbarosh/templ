@@ -1,0 +1,18 @@
+[
+  {"page_url": "/apps/base64-encode-decode/index.html", "id": "base64-encode-decode", "icon": "🔤", "name": "Base64 Encode/Decode", "desc": "UTF‑8 safe encoder/decoder", "about": "Convert text ⇄ Base64 (UTF‑8). Nothing leaves your browser."},
+  {"page_url": "/apps/html-encode-decode/index.html", "id": "html-encode-decode", "icon": "🔣", "name": "HTML Encode/Decode", "desc": "Escape & unescape HTML", "about": "Turn <, >, &, \" and ' characters into HTML entities and back."},
+  {"page_url": "/apps/iframe/index.html", "id": "iframe", "icon": "🪟", "name": "IFrame Viewer", "desc": "Embed a URL in an iframe", "about": "Note: some sites block embedding via X-Frame-Options/CSP."},
+  {"page_url": "/apps/json-editor/index.html", "id": "json-editor", "icon": "🧾", "name": "JSON Editor", "desc": "Format + outline keys", "about": "Left: edit JSON. Right: pretty + outline with types."},
+  {"page_url": "/apps/json-formatter/index.html", "id": "json-formatter", "icon": "{ }", "name": "JSON Formatter", "desc": "Fix & format JSON-ish input", "about": "Accepts single quotes, unquoted keys, trailing commas, and // /* */ comments. Always outputs valid JSON."},
+  {"page_url": "/apps/lipsum-shuffle/index.html", "id": "lipsum-shuffle", "icon": "🪄", "name": "Lipsum Shuffle", "desc": "Random lorem ipsum text", "about": "Shuffles sentences from a sample Lorem Ipsum to generate filler text."},
+  {"page_url": "/apps/math-degs-rads/index.html", "id": "math-degs-rads", "icon": "📐", "name": "Degrees ⇄ Radians", "desc": "Convert angles both ways", "about": "Type in either field; the other updates instantly."},
+  {"page_url": "/apps/media-player/index.html", "id": "media-player", "icon": "🎬", "name": "Media Player", "desc": "Play audio/video from file or URL", "about": "Local files never leave your device. Some remote URLs may not allow playback due to CORS."},
+  {"page_url": "/apps/url-encode-decode/index.html", "id": "url-encode-decode", "icon": "🔗", "name": "URL Encode/Decode", "desc": "encodeURIComponent / decodeURIComponent", "about": "Great for query params & paths."},
+  {"page_url": "/apps/white/index.html", "id": "white", "icon": "💡", "name": "White (Lamp)", "desc": "Full white screen for brightness", "about": "Use as a soft white light. You can change color and go fullscreen."},
+  {"page_url": "/apps/notes/index.html", "id": "notes", "icon": "📝", "name": "Notes", "desc": "Simple notepad with local save", "about": "Plain text notes saved locally in your browser."},
+  {"page_url": "/apps/todo/index.html", "id": "todo", "icon": "✅", "name": "To‑Do", "desc": "Tasks with checkboxes", "about": "A very small to‑do list. Click a task to toggle done."},
+  {"page_url": "/apps/calc/index.html", "id": "calc", "icon": "🧮", "name": "Calculator", "desc": "Eval arithmetic expressions", "about": "Supports + − × ÷ % parentheses and decimals. Example: (2+3*5)/2"},
+  {"page_url": "/apps/stopwatch/index.html", "id": "stopwatch", "icon": "⏱️", "name": "Stopwatch", "desc": "Start / pause / reset", "about": "Minimal stopwatch with millisecond precision."},
+  {"page_url": "/apps/json/index.html", "id": "json", "icon": "{ }", "name": "JSON Tools", "desc": "Format / Minify / Sort keys", "about": "Paste JSON on the left, get the result on the right. No upload; everything stays local."},
+  {"page_url": "/apps/pwd/index.html", "id": "pwd", "icon": "🔐", "name": "Password Generator", "desc": "Random strings with options", "about": "Generates random passwords locally in your browser."}
+]

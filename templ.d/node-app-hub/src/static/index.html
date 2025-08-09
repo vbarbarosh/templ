@@ -1,419 +1,76 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>App Hub</title>
-<style>
-  :root {
-    --bg: #f6f7fb;
-    --panel: #ffffff;
-    --text: #111827;
-    --muted: #6b7280;
-    --primary: #2563eb;
-    --accent: #10b981;
-    --danger: #ef4444;
-    --border: #e5e7eb;
-    --shadow: 0 8px 30px rgba(0,0,0,.06);
-  }
-  [data-theme="dark"] {
-    --bg: #0b1020;
-    --panel: #111831;
-    --text: #e5e7eb;
-    --muted: #9aa3b2;
-    --primary: #60a5fa;
-    --accent: #34d399;
-    --danger: #f87171;
-    --border: #1f2a44;
-    --shadow: 0 8px 30px rgba(0,0,0,.35);
-  }
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-  }
-  .wrap {
-    display: grid;
-    grid-template-columns: 260px 1fr;
-    grid-template-rows: 56px 1fr;
-    grid-template-areas:
-      "top top"
-      "side main";
-    height: 100%;
-  }
-  header {
-    grid-area: top;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    background: var(--panel);
-    border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 10;
-  }
-  header .title { font-weight: 700; letter-spacing: .3px; margin-right: 6px; }
-  header .spacer { flex: 1; }
-  header input[type="search"] {
-    width: 360px;
-    max-width: 40vw;
-    padding: 9px 12px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    background: var(--bg);
-    color: var(--text);
-  }
-  header button { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--text); cursor: pointer; }
-  header button:hover { border-color: var(--primary); }
-
-  aside {
-    grid-area: side;
-    background: var(--panel);
-    border-right: 1px solid var(--border);
-    overflow: auto;
-  }
-  .apps {
-    padding: 12px;
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .app-item { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--border); background: var(--panel); border-radius: 12px; cursor: pointer; box-shadow: var(--shadow); position: relative; transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease; }
-  .app-item:hover { border-color: var(--primary); }
-  .app-item.active { border-color: var(--primary); background: var(--bg); box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 22%, transparent), var(--shadow); }
-  .app-item.active::before { content: ""; position: absolute; left: -1px; top: 8px; bottom: 8px; width: 4px; border-radius: 4px; background: var(--primary); }
-  .app-item.active .name { color: var(--primary); }
-  .app-item.active .ico { transform: scale(1.08); }
-  .app-item .ico { font-size: 22px; width: 28px; text-align: center; }
-  .app-item .name { font-weight: 600; }
-  .app-item .desc { color: var(--muted); font-size: 12px; }
-
-  main {
-    grid-area: main;
-    overflow: auto;
-    padding: 18px;
-  }
-  .panel {
-    background: var(--panel);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 16px;
-    box-shadow: var(--shadow);
-    min-height: calc(100% - 36px);
-  }
-  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-  .toolbar > * { border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: var(--bg); color: var(--text); }
-  .toolbar button { background: var(--panel); cursor: pointer; }
-  .toolbar button.primary { border-color: var(--primary); }
-  .toolbar button.danger { border-color: var(--danger); }
-
-  .grid-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .grid-two textarea { width: 100%; height: 48vh; }
-  textarea, input, select { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
-  textarea { resize: vertical; min-height: 160px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-  code, pre { background: var(--bg); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); }
-  .muted { color: var(--muted); }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; }
-  .row { display: flex; gap: 8px; align-items: center; }
-  .row > * { margin: 0; }
-  .list { display: grid; gap: 8px; }
-  .card { border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--panel); }
-  .right { text-align: right; }
-  .hidden { display: none !important; }
-
-  @media (max-width: 900px) {
-    .wrap { grid-template-columns: 100%; grid-template-areas: "top" "main"; }
-    aside { display: none; }
-    header input[type="search"] { max-width: 52vw; }
-  }
-</style>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>node-app-hub</title>
+    <link href="css/default.css" rel="stylesheet">
+    <link href="https://unpkg.com/@vbarbarosh/smcss@1.2.0/dist/reset.css" rel="stylesheet">
+    <link href="https://unpkg.com/@vbarbarosh/smcss@1.2.0/dist/sm.css" rel="stylesheet">
+    <style>
+        .gap5 { gap: 5px; }
+        .gap10 { gap: 10px; }
+        .gap15 { gap: 15px; }
+        .fit-down { object-fit: scale-down; }
+        pre { margin: 0; }
+    </style>
 </head>
 <body>
-<div class="wrap" id="app">
-  <header>
-    <div class="title">🧰 App Hub</div>
-    <span class="badge" id="app-count">0 apps</span>
-    <div class="spacer"></div>
-    <input type="search" id="search" placeholder="Search apps…" />
-    <button id="theme">Toggle theme</button>
-  </header>
 
-  <aside>
-    <div class="apps" id="app-list"></div>
-  </aside>
-
-  <main>
-    <div class="panel" id="panel">
-      <h2 id="panel-title">Welcome</h2>
-      <p class="muted">Pick an app on the left. Everything is stored locally in your browser.</p>
-      <p class="muted">Tip: Use the search box to filter apps quickly.</p>
-    </div>
-  </main>
-</div>
+<script src="js/utils.js"></script>
+<script src="https://unpkg.com/@vbarbarosh/ui-helpers@0.2.1/src/static/js/bundle.js"></script>
 
 <script>
-(function(){
-  // --- tiny helpers ---
-  function qs(sel, el){ return (el||document).querySelector(sel); }
-  function qsa(sel, el){ return Array.prototype.slice.call((el||document).querySelectorAll(sel)); }
-  function el(tag, props){ var x=document.createElement(tag); if(props){ for(var k in props){ if(k==="text") x.textContent=props[k]; else if(k==="html") x.innerHTML=props[k]; else x.setAttribute(k, props[k]); } } return x; }
-  function on(target, type, handler){ target.addEventListener(type, handler, false); }
-  function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
-  function load(key, def){ try{ var v = localStorage.getItem(key); return v? JSON.parse(v) : def; }catch(e){ return def; } }
-  function download(filename, text){ var blob = new Blob([text], {type: 'text/plain'}); var url = URL.createObjectURL(blob); var a=el('a',{download:filename, href:url}); document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); }
-  function copyText(text){ navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : (function(){ var ta=el('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); })(); }
-
-  // --- app registry ---
-  var apps = [];
-  function register(app){ apps.push(app); }
-
-  function setActive(id){ save('apphub.active', id); renderMain(id); highlightActive(id); }
-  function highlightActive(id){ qsa('.app-item').forEach(function(node){ node.classList.toggle('active', node.dataset.id===id); }); }
-
-  function renderList(filter){
-    var list = qs('#app-list'); list.innerHTML='';
-    var f = (filter||'').trim().toLowerCase();
-    var visible = 0;
-    apps.sort(function(a,b){ return a.name.localeCompare(b.name); });
-    apps.forEach(function(app){
-      var text = (app.name + ' ' + (app.desc||'')).toLowerCase();
-      if(f && text.indexOf(f)===-1) return;
-      var item = el('div', {class:'app-item', 'data-id':app.id});
-      var ico = el('div', {class:'ico', text: app.icon||'🧩'});
-      var box = el('div');
-      var name = el('div', {class:'name', text: app.name});
-      var desc = el('div', {class:'desc', text: app.desc||''});
-      box.appendChild(name); box.appendChild(desc);
-      item.appendChild(ico); item.appendChild(box);
-      on(item,'click',function(){ setActive(app.id); });
-      list.appendChild(item);
-      visible++;
-    });
-    qs('#app-count').textContent = visible + ' apps';
-    // keep the previously active app visibly selected after filtering/rerendering
-    highlightActive(load('apphub.active',''));
-  }
-
-  function renderMain(id){
-    var app = apps.find(function(a){ return a.id===id; });
-    var panel = qs('#panel');
-    if(!app){ panel.innerHTML = '<h2>Welcome</h2><p class="muted">Pick an app on the left.</p>'; return; }
-    panel.innerHTML = '';
-    var h2 = el('h2', {text: app.name});
-    var about = app.about ? el('p', {class:'muted', text: app.about}) : null;
-    panel.appendChild(h2);
-    if(about) panel.appendChild(about);
-    var view = app.render();
-    if(view) panel.appendChild(view);
-    document.title = 'App Hub — ' + app.name;
-  }
-
-  // --- theme toggle ---
-  function applyTheme(){ var t = load('apphub.theme','light'); document.documentElement.setAttribute('data-theme', t); }
-  function toggleTheme(){ var t = load('apphub.theme','light'); t = t==='light' ? 'dark' : 'light'; save('apphub.theme', t); applyTheme(); }
-
-  // ========================
-  // Built-in demo apps below
-  // ========================
-
-  // Notes
-  register({
-    id:'notes', icon:'📝', name:'Notes', desc:'Simple notepad with local save', about:'Plain text notes saved locally in your browser.',
-    render: function(){
-      var wrap = el('div');
-      var tb = el('div', {class:'toolbar'});
-      var btnSave = el('button', {class:'primary', text:'Save'});
-      var btnClear = el('button', {class:'danger', text:'Clear'});
-      var btnDownload = el('button', {text:'Download .txt'});
-      var ta = el('textarea');
-      ta.value = load('apphub.notes','');
-      on(btnSave,'click',function(){ save('apphub.notes', ta.value); btnSave.textContent='Saved ✓'; setTimeout(function(){ btnSave.textContent='Save'; }, 800); });
-      on(btnClear,'click',function(){ if(confirm('Clear notes?')){ ta.value=''; save('apphub.notes',''); } });
-      on(btnDownload,'click',function(){ download('notes.txt', ta.value); });
-      tb.appendChild(btnSave); tb.appendChild(btnClear); tb.appendChild(btnDownload);
-      wrap.appendChild(tb); wrap.appendChild(ta);
-      return wrap;
-    }
-  });
-
-  // To‑Do
-  register({
-    id:'todo', icon:'✅', name:'To‑Do', desc:'Tasks with checkboxes', about:'A very small to‑do list. Click a task to toggle done.',
-    render: function(){
-      var data = load('apphub.todo', []);
-      var wrap = el('div');
-      var tb = el('div', {class:'toolbar'});
-      var input = el('input', {placeholder:'New task…'});
-      var add = el('button', {class:'primary', text:'Add'});
-      var clear = el('button', {class:'danger', text:'Clear done'});
-      var exportBtn = el('button', {text:'Export JSON'});
-      var list = el('div', {class:'list'});
-
-      function render(){ list.innerHTML='';
-        data.forEach(function(it, idx){
-          var card = el('div', {class:'card'});
-          var row = el('div', {class:'row'});
-          var cb = el('input', {type:'checkbox'}); cb.checked = !!it.done;
-          var txt = el('div', {style:'flex:1; ' + (it.done?'text-decoration: line-through; color: var(--muted);':'')}); txt.textContent = it.text;
-          var del = el('button', {text:'Delete'});
-          on(cb,'change',function(){ it.done = cb.checked; save('apphub.todo', data); render(); });
-          on(txt,'click',function(){ it.done = !it.done; save('apphub.todo', data); render(); });
-          on(del,'click',function(){ data.splice(idx,1); save('apphub.todo', data); render(); });
-          row.appendChild(cb); row.appendChild(txt); row.appendChild(del); card.appendChild(row); list.appendChild(card);
-        });
-      }
-
-      function addItem(){ var t = (input.value||'').trim(); if(!t) return; data.push({text:t, done:false}); input.value=''; save('apphub.todo', data); render(); }
-      on(add,'click', addItem);
-      on(input,'keydown', function(e){ if(e.key==='Enter'){ addItem(); }});
-      on(clear,'click', function(){ data = data.filter(function(it){ return !it.done; }); save('apphub.todo', data); render(); });
-      on(exportBtn,'click', function(){ download('todo.json', JSON.stringify(data, null, 2)); });
-
-      tb.appendChild(input); tb.appendChild(add); tb.appendChild(clear); tb.appendChild(exportBtn);
-      wrap.appendChild(tb); wrap.appendChild(list);
-      render();
-      return wrap;
-    }
-  });
-
-  // Calculator (safe-ish)
-  register({
-    id:'calc', icon:'🧮', name:'Calculator', desc:'Eval arithmetic expressions', about:'Supports + − × ÷ % parentheses and decimals. Example: (2+3*5)/2',
-    render: function(){
-      var wrap = el('div');
-      var tb = el('div', {class:'toolbar'});
-      var inp = el('input', {placeholder:'Type expression, e.g. (2+3*5)/2'});
-      var btn = el('button', {class:'primary', text:'Calculate'});
-      var out = el('div'); out.innerHTML = '<p class="muted">Result will appear here.</p>';
-      function safeEval(src){
-        // allow digits, spaces, operators, parentheses, dot
-        if(!/^[-+*/%(). 0-9]+$/.test(src)) throw new Error('Only 0-9 . ( ) + - * / % allowed');
-        // eslint-disable-next-line no-new-func
-        return Function('return('+src+')')();
-      }
-      function calc(){ try{ var v = safeEval(inp.value.trim()); out.innerHTML = '<h3>'+ v +'</h3>'; }catch(e){ out.innerHTML = '<pre>'+ e.message +'</pre>'; } }
-      on(btn,'click', calc); on(inp,'keydown', function(e){ if(e.key==='Enter') calc(); });
-      tb.appendChild(inp); tb.appendChild(btn);
-      wrap.appendChild(tb); wrap.appendChild(out);
-      return wrap;
-    }
-  });
-
-  // Stopwatch
-  register({
-    id:'stopwatch', icon:'⏱️', name:'Stopwatch', desc:'Start / pause / reset', about:'Minimal stopwatch with millisecond precision.',
-    render: function(){
-      var wrap = el('div');
-      var display = el('h2', {text:'00:00.000'});
-      var tb = el('div', {class:'toolbar'});
-      var start = el('button', {class:'primary', text:'Start'});
-      var pause = el('button', {text:'Pause'});
-      var reset = el('button', {class:'danger', text:'Reset'});
-
-      var running=false, startAt=0, elapsed=0, rafId=0;
-      function fmt(ms){ var m = Math.floor(ms/60000); var s = Math.floor((ms%60000)/1000); var x = Math.floor(ms%1000); return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'.'+String(x).padStart(3,'0'); }
-      function loop(){ if(!running) return; var now = performance.now(); var total = elapsed + (now - startAt); display.textContent = fmt(total); rafId = requestAnimationFrame(loop); }
-      on(start,'click',function(){ if(running) return; running=true; startAt=performance.now(); loop(); });
-      on(pause,'click',function(){ if(!running) return; running=false; elapsed += performance.now()-startAt; cancelAnimationFrame(rafId); });
-      on(reset,'click',function(){ running=false; elapsed=0; display.textContent='00:00.000'; cancelAnimationFrame(rafId); });
-
-      tb.appendChild(start); tb.appendChild(pause); tb.appendChild(reset);
-      wrap.appendChild(display); wrap.appendChild(tb);
-      return wrap;
-    }
-  });
-
-  // JSON Tools
-  register({
-    id:'json', icon:'{ }', name:'JSON Tools', desc:'Format / Minify / Sort keys', about:'Paste JSON on the left, get the result on the right. No upload; everything stays local.',
-    render: function(){
-      var wrap = el('div');
-      var tb = el('div', {class:'toolbar'});
-      var btnFmt = el('button', {class:'primary', text:'Format'});
-      var btnMini = el('button', {text:'Minify'});
-      var btnSort = el('button', {text:'Sort keys'});
-      var btnCopy = el('button', {text:'Copy output'});
-      var grid = el('div', {class:'grid-two'});
-      var a = el('textarea'); a.placeholder = '{"hello":"world"}';
-      var b = el('textarea'); b.placeholder = 'Output…';
-
-      function parse(){ try{ return JSON.parse(a.value); }catch(e){ alert('JSON parse error: '+e.message); throw e; } }
-      function sortKeys(value){
-        if(Array.isArray(value)) return value.map(function(v){ return sortKeys(v); });
-        if(value && typeof value === 'object'){
-          var out = {}; Object.keys(value).sort().forEach(function(k){ out[k] = sortKeys(value[k]); }); return out;
-        }
-        return value;
-      }
-      on(btnFmt,'click',function(){ try{ b.value = JSON.stringify(JSON.parse(a.value), null, 2); }catch(e){ b.value=''; alert('JSON parse error: '+e.message); } });
-      on(btnMini,'click',function(){ try{ b.value = JSON.stringify(JSON.parse(a.value)); }catch(e){ b.value=''; alert('JSON parse error: '+e.message); } });
-      on(btnSort,'click',function(){ try{ b.value = JSON.stringify(sortKeys(parse()), null, 2); }catch(e){} });
-      on(btnCopy,'click',function(){ copyText(b.value||''); });
-
-      tb.appendChild(btnFmt); tb.appendChild(btnMini); tb.appendChild(btnSort); tb.appendChild(btnCopy);
-      grid.appendChild(a); grid.appendChild(b);
-      wrap.appendChild(tb); wrap.appendChild(grid);
-      return wrap;
-    }
-  });
-
-  // Password Generator
-  register({
-    id:'pwd', icon:'🔐', name:'Password Generator', desc:'Random strings with options', about:'Generates random passwords locally in your browser.',
-    render: function(){
-      var wrap = el('div');
-      var tb = el('div', {class:'toolbar'});
-      var out = el('input', {readonly:'', placeholder:'Click Generate…', style:'flex:1;'});
-      var copy = el('button', {text:'Copy'});
-      var gen = el('button', {class:'primary', text:'Generate'});
-
-      var opt = el('div', {class:'row'});
-      var len = el('input', {type:'range', min:'8', max:'64', value: load('apphub.pwd.len', '16')+''});
-      var lenLbl = el('span', {text:'Length: '+len.value});
-      var lc = el('input', {type:'checkbox', checked:'', id:'lc'});
-      var uc = el('input', {type:'checkbox', checked:'', id:'uc'});
-      var dg = el('input', {type:'checkbox', checked:'', id:'dg'});
-      var sy = el('input', {type:'checkbox', id:'sy'});
-      var lab1 = el('label', {for:'lc', text:'a-z'});
-      var lab2 = el('label', {for:'uc', text:'A-Z'});
-      var lab3 = el('label', {for:'dg', text:'0-9'});
-      var lab4 = el('label', {for:'sy', text:'symbols'});
-
-      on(len,'input',function(){ lenLbl.textContent='Length: '+len.value; save('apphub.pwd.len', parseInt(len.value,10)); });
-      on(copy,'click',function(){ copyText(out.value||''); });
-      function randomChars(s){ var r=''; for(var i=0;i<parseInt(len.value,10);i++){ r+= s[Math.floor(Math.random()*s.length)]; } return r; }
-      function generate(){ var pool='';
-        if(lc.checked) pool+='abcdefghijklmnopqrstuvwxyz';
-        if(uc.checked) pool+='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        if(dg.checked) pool+='0123456789';
-        if(sy.checked) pool+='!@#$%^&*()-_=+[]{};:,./?';
-        if(!pool){ alert('Pick at least one set'); return; }
-        out.value = randomChars(pool);
-      }
-      on(gen,'click', generate);
-
-      tb.appendChild(out); tb.appendChild(copy); tb.appendChild(gen);
-      opt.appendChild(lenLbl); opt.appendChild(len); opt.appendChild(lc); opt.appendChild(lab1); opt.appendChild(uc); opt.appendChild(lab2); opt.appendChild(dg); opt.appendChild(lab3); opt.appendChild(sy); opt.appendChild(lab4);
-      wrap.appendChild(tb); wrap.appendChild(opt);
-      return wrap;
-    }
-  });
-
-  // --- boot ---
-  applyTheme();
-  renderList('');
-  var last = load('apphub.active', 'notes');
-  renderMain(last);
-
-  on(qs('#theme'),'click', toggleTheme);
-  on(qs('#search'),'input', function(){ renderList(this.value); });
-  // When the list re-renders, we still want the old active highlighted
-  on(document,'click', function(){ highlightActive(load('apphub.active','')); });
-
-  // Populate list initially and set active on click
-  renderList('');
-})();
+vue_component('app', {
+    template: `
+    <div class="fix-f vsplit oa">
+        <header>
+            <div class="title">🧰 App Hub</div>
+            <span class="badge" id="app-count">{{ plural(apps.length, '# app', '# apps') }}</span>
+            <div class="spacer"></div>
+            <input type="search" id="search" placeholder="Search apps…">
+            <button id="theme">Toggle theme</button>
+        </header>
+        <div class="fluid hsplit">
+            <div class="w250 oa">
+                <ul class="apps xm p12">
+                    <li v-for="item in apps" v-on:click="click_app(item)" v-bind:key="item.id" v-bind:class="{active: (item === active)}" class="app-item">
+                        <div class="ico">{{ item.icon }}</div>
+                        <div>
+                            <div class="name">{{ item.name }}</div>
+                            <div class="desc">{{ item.desc }}</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="vsplit fluid p12 oa">
+                <div class="rel fluid panel">
+                    <iframe v-if="active" v-bind:src="active.page_url" class="abs-f ww hh oa xborder"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+    `,
+    data: function () {
+        return {
+            apps: [],
+            active: null,
+        };
+    },
+    methods: {
+        plural,
+        refresh: async function () {
+            this.apps = await http_get_json('apps.json');
+        },
+        click_app: function (item) {
+            this.active = item;
+        },
+    },
+    created: async function () {
+        await blocking(this.refresh());
+    },
+});
 </script>
+
 </body>
 </html>

@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>App Hub</title>
+<style>
+  :root {
+    --bg: #f6f7fb;
+    --panel: #ffffff;
+    --text: #111827;
+    --muted: #6b7280;
+    --primary: #2563eb;
+    --accent: #10b981;
+    --danger: #ef4444;
+    --border: #e5e7eb;
+    --shadow: 0 8px 30px rgba(0,0,0,.06);
+  }
+  [data-theme="dark"] {
+    --bg: #0b1020;
+    --panel: #111831;
+    --text: #e5e7eb;
+    --muted: #9aa3b2;
+    --primary: #60a5fa;
+    --accent: #34d399;
+    --danger: #f87171;
+    --border: #1f2a44;
+    --shadow: 0 8px 30px rgba(0,0,0,.35);
+  }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  }
+  .wrap {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    grid-template-rows: 56px 1fr;
+    grid-template-areas:
+      "top top"
+      "side main";
+    height: 100%;
+  }
+  header {
+    grid-area: top;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 10;
+  }
+  header .title { font-weight: 700; letter-spacing: .3px; margin-right: 6px; }
+  header .spacer { flex: 1; }
+  header input[type="search"] {
+    width: 360px;
+    max-width: 40vw;
+    padding: 9px 12px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header button { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel); color: var(--text); cursor: pointer; }
+  header button:hover { border-color: var(--primary); }
+
+  aside {
+    grid-area: side;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    overflow: auto;
+  }
+  .apps {
+    padding: 12px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .app-item { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--border); background: var(--panel); border-radius: 12px; cursor: pointer; box-shadow: var(--shadow); position: relative; transition: border-color .2s ease, background .2s ease, box-shadow .2s ease, transform .2s ease; }
+  .app-item:hover { border-color: var(--primary); }
+  .app-item.active { border-color: var(--primary); background: var(--bg); box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 22%, transparent), var(--shadow); }
+  .app-item.active::before { content: ""; position: absolute; left: -1px; top: 8px; bottom: 8px; width: 4px; border-radius: 4px; background: var(--primary); }
+  .app-item.active .name { color: var(--primary); }
+  .app-item.active .ico { transform: scale(1.08); }
+  .app-item .ico { font-size: 22px; width: 28px; text-align: center; }
+  .app-item .name { font-weight: 600; }
+  .app-item .desc { color: var(--muted); font-size: 12px; }
+
+  main {
+    grid-area: main;
+    overflow: auto;
+    padding: 18px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+    min-height: calc(100% - 36px);
+  }
+  .toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .toolbar > * { border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; background: var(--bg); color: var(--text); }
+  .toolbar button { background: var(--panel); cursor: pointer; }
+  .toolbar button.primary { border-color: var(--primary); }
+  .toolbar button.danger { border-color: var(--danger); }
+
+  .grid-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-two textarea { width: 100%; height: 48vh; }
+  textarea, input, select { background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; }
+  textarea { resize: vertical; min-height: 160px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  code, pre { background: var(--bg); padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); }
+  .muted { color: var(--muted); }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--border); font-size: 12px; }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .row > * { margin: 0; }
+  .list { display: grid; gap: 8px; }
+  .card { border: 1px solid var(--border); border-radius: 12px; padding: 10px; background: var(--panel); }
+  .right { text-align: right; }
+  .hidden { display: none !important; }
+
+  @media (max-width: 900px) {
+    .wrap { grid-template-columns: 100%; grid-template-areas: "top" "main"; }
+    aside { display: none; }
+    header input[type="search"] { max-width: 52vw; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header>
+    <div class="title">🧰 App Hub</div>
+    <span class="badge" id="app-count">0 apps</span>
+    <div class="spacer"></div>
+    <input type="search" id="search" placeholder="Search apps…" />
+    <button id="theme">Toggle theme</button>
+  </header>
+
+  <aside>
+    <div class="apps" id="app-list"></div>
+  </aside>
+
+  <main>
+    <div class="panel" id="panel">
+      <h2 id="panel-title">Welcome</h2>
+      <p class="muted">Pick an app on the left. Everything is stored locally in your browser.</p>
+      <p class="muted">Tip: Use the search box to filter apps quickly.</p>
+    </div>
+    <details id="selftests" class="muted" style="margin-top:12px">
+      <summary>Self‑tests</summary>
+      <pre id="selftests-log" class="muted" style="white-space:pre-wrap"></pre>
+    </details>
+  </main>
+</div>
+
+<script>
+(function(){
+  // --- tiny helpers ---
+  function qs(sel, el){ return (el||document).querySelector(sel); }
+  function qsa(sel, el){ return Array.prototype.slice.call((el||document).querySelectorAll(sel)); }
+  function el(tag, props){ var x=document.createElement(tag); if(props){ for(var k in props){ if(k==="text") x.textContent=props[k]; else if(k==="html") x.innerHTML=props[k]; else x.setAttribute(k, props[k]); } } return x; }
+  function on(target, type, handler){ target.addEventListener(type, handler, false); }
+  function save(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
+  function load(key, def){ try{ var v = localStorage.getItem(key); return v? JSON.parse(v) : def; }catch(e){ return def; } }
+  function download(filename, text){ var blob = new Blob([text], {type: 'text/plain'}); var url = URL.createObjectURL(blob); var a=el('a',{download:filename, href:url}); document.body.appendChild(a); a.click(); setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 0); }
+  function copyText(text){ if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(text); } else { var ta=el('textarea'); ta.value=text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); ta.remove(); } }
+
+  // --- app registry ---
+  var apps = [];
+  function register(app){ apps.push(app); }
+
+  function setActive(id){ save('apphub.active', id); renderMain(id); highlightActive(id); }
+  function highlightActive(id){ qsa('.app-item').forEach(function(node){ node.classList.toggle('active', node.dataset.id===id); }); }
+
+  function renderList(filter){
+    var list = qs('#app-list'); list.innerHTML='';
+    var f = (filter||'').trim().toLowerCase();
+    var visible = 0;
+    apps.sort(function(a,b){ return a.name.localeCompare(b.name); });
+    apps.forEach(function(app){
+      var text = (app.name + ' ' + (app.desc||'')).toLowerCase();
+      if(f && text.indexOf(f)===-1) return;
+      var item = el('div', {class:'app-item', 'data-id':app.id});
+      var ico = el('div', {class:'ico', text: app.icon||'🧩'});
+      var box = el('div');
+      var name = el('div', {class:'name', text: app.name});
+      var desc = el('div', {class:'desc', text: app.desc||''});
+      box.appendChild(name); box.appendChild(desc);
+      item.appendChild(ico); item.appendChild(box);
+      on(item,'click',function(){ setActive(app.id); });
+      list.appendChild(item);
+      visible++;
+    });
+    qs('#app-count').textContent = visible + ' apps';
+    // keep the previously active app visibly selected after filtering/rerendering
+    highlightActive(load('apphub.active',''));
+  }
+
+  function renderMain(id){
+    var app = apps.find(function(a){ return a.id===id; });
+    var panel = qs('#panel');
+    if(!app){ panel.innerHTML = '<h2>Welcome</h2><p class="muted">Pick an app on the left.</p>'; return; }
+    panel.innerHTML = '';
+    var h2 = el('h2', {text: app.name});
+    var about = app.about ? el('p', {class:'muted', text: app.about}) : null;
+    panel.appendChild(h2);
+    if(about) panel.appendChild(about);
+    var view = app.render();
+    if(view) panel.appendChild(view);
+    document.title = 'App Hub — ' + app.name;
+  }
+
+  // --- theme toggle ---
+  function applyTheme(){ var t = load('apphub.theme','light'); document.documentElement.setAttribute('data-theme', t); }
+  function toggleTheme(){ var t = load('apphub.theme','light'); t = t==='light' ? 'dark' : 'light'; save('apphub.theme', t); applyTheme(); }
+
+  // ========================
+  // Built-in demo apps below
+  // ========================
+
+  // Base64 Encode/Decode (UTF-8 safe)
+  register({
+    id:'base64-encode-decode', icon:'🔤', name:'Base64 Encode/Decode', desc:'UTF‑8 safe encoder/decoder', about:'Convert text ⇄ Base64 (UTF‑8). Nothing leaves your browser.',
+    render: function(){
+      var wrap = el('div');
+      var tb = el('div', {class:'toolbar'});
+      var encBtn = el('button', {class:'primary', text:'Encode →'});
+      var decBtn = el('button', {text:'← Decode'});
+      var swapBtn = el('button', {text:'Swap'});
+      var clearBtn = el('button', {class:'danger', text:'Clear'});
+      var copyBtn = el('button', {text:'Copy output'});
+      var grid = el('div', {class:'grid-two'});
+      var a = el('textarea'); a.placeholder = 'Text…';
+      var b = el('textarea'); b.placeholder = 'Base64…';
+      function b64encode(str){ var bytes = new TextEncoder().encode(str); var bin=''; for(var i=0;i<bytes.length;i++){ bin += String.fromCharCode(bytes[i]); } return btoa(bin); }
+      function b64decode(txt){ var bin = atob(txt); var bytes = new Uint8Array(bin.length); for(var i=0;i<bin.length;i++){ bytes[i] = bin.charCodeAt(i); } return new TextDecoder().decode(bytes); }
+      on(encBtn,'click', function(){ try{ b.value = b64encode(a.value||''); }catch(e){ alert('Encode error: '+e.message); } });
+      on(decBtn,'click', function(){ try{ a.value = b64decode(b.value||''); }catch(e){ alert('Decode error (is it Base64?): '+e.message); } });
+      on(swapBtn,'click', function(){ var t = a.value; a.value = b.value; b.value = t; });
+      on(clearBtn,'click', function(){ a.value=''; b.value=''; });
+      on(copyBtn,'click', function(){ copyText(b.value||''); });
+      tb.appendChild(encBtn); tb.appendChild(decBtn); tb.appendChild(swapBtn); tb.appendChild(clearBtn); tb.appendChild(copyBtn);
+      grid.appendChild(a); grid.appendChild(b); wrap.appendChild(tb); wrap.appendChild(grid); return wrap;
+    }
+  });
+
+  // HTML Encode/Decode
+  register({
+    id:'html-encode-decode', icon:'🔣', name:'HTML Encode/Decode', desc:'Escape & unescape HTML', about:'Turn <, >, &, " and \' characters into HTML entities and back.',
+    render: function(){
+      var wrap = el('div'); var tb = el('div',{class:'toolbar'});
+      var enc = el('button',{class:'primary', text:'Encode →'});
+      var dec = el('button',{text:'← Decode'});
+      var copyBtn = el('button',{text:'Copy output'});
+      var grid = el('div',{class:'grid-two'});
+      var a = el('textarea'); a.placeholder='Raw text…';
+      var b = el('textarea'); b.placeholder='HTML…';
+      function htmlEncode(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+      function htmlDecode(s){ var div = document.createElement('div'); div.innerHTML = s||''; return div.textContent; }
+      on(enc,'click',function(){ b.value = htmlEncode(a.value||''); });
+      on(dec,'click',function(){ a.value = htmlDecode(b.value||''); });
+      on(copyBtn,'click',function(){ copyText(b.value||''); });
+      tb.appendChild(enc); tb.appendChild(dec); tb.appendChild(copyBtn); grid.appendChild(a); grid.appendChild(b); wrap.appendChild(tb); wrap.appendChild(grid); return wrap;
+    }
+  });
+
+  // Iframe viewer
+  register({
+    id:'iframe', icon:'🪟', name:'IFrame Viewer', desc:'Embed a URL in an iframe', about:'Note: some sites block embedding via X-Frame-Options/CSP.',
+    render: function(){
+      var wrap = el('div'); var tb = el('div',{class:'toolbar'});
+      var url = el('input',{placeholder:'https://example.com', style:'min-width: 360px;'}); url.value = 'https://example.com';
+      var btn = el('button',{class:'primary', text:'Load'});
+      var pop = el('button',{text:'Open in new tab'});
+      var frame = el('iframe',{style:'width:100%; height:70vh; border:1px solid var(--border); border-radius:12px; background: var(--panel);'});
+      on(btn,'click', function(){ frame.setAttribute('src', url.value); });
+      on(pop,'click', function(){ if(url.value) window.open(url.value,'_blank'); });
+      tb.appendChild(url); tb.appendChild(btn); tb.appendChild(pop); wrap.appendChild(tb); wrap.appendChild(frame); return wrap;
+    }
+  });
+
+  // JSON Editor (outline)
+  register({
+    id:'json-editor', icon:'🧾', name:'JSON Editor', desc:'Format + outline keys', about:'Left: edit JSON. Right: pretty + outline with types.',
+    render: function(){
+      var wrap = el('div'); var tb = el('div',{class:'toolbar'});
+      var fmt = el('button',{class:'primary', text:'Format'});
+      var mini = el('button',{text:'Minify'});
+      var outlineBtn = el('button',{text:'Outline'});
+      var grid = el('div',{class:'grid-two'});
+      var a = el('textarea'); a.placeholder='{"name":"Alice","age":30,"pets":["cat"]}';
+      var b = el('textarea'); b.placeholder='Output…';
+      function parse(){ try{ return JSON.parse(a.value); }catch(e){ alert('JSON parse error: '+e.message); throw e; } }
+      function outline(value, indent){
+        indent = indent||0; var pad = Array(indent+1).join('  ');
+        if(Array.isArray(value)){
+          var s = pad+'[' + '\n';
+          for(var i=0;i<value.length;i++){ s += outline(value[i], indent+1); }
+          return s + pad+']' + '\n';
+        } else if(value && typeof value==='object'){
+          var keys = Object.keys(value);
+          var s2 = pad+'{' + '\n';
+          for(var k=0;k<keys.length;k++){
+            var key = keys[k]; var v = value[key];
+            var t = (v===null?'null': Array.isArray(v)?'array': typeof v);
+            s2 += pad+'  '+key+': '+t + '\n';
+            if(t==='object' || t==='array'){ s2 += outline(v, indent+1); }
+          }
+          return s2 + pad+'}' + '\n';
+        }
+        return pad+String(value) + '\n';
+      }
+      on(fmt,'click', function(){ try{ b.value = JSON.stringify(parse(), null, 2); }catch(e){} });
+      on(mini,'click', function(){ try{ b.value = JSON.stringify(parse()); }catch(e){} });
+      on(outlineBtn,'click', function(){ try{ b.value = outline(parse(), 0); }catch(e){} });
+      tb.appendChild(fmt); tb.appendChild(mini); tb.appendChild(outlineBtn); grid.appendChild(a); grid.appendChild(b); wrap.appendChild(tb); wrap.appendChild(grid); return wrap;
+    }
+  });
+
+    // JSON Formatter (tolerant parser)
+    register({
+        id:'json-formatter',
+        icon:'{ }',
+        name:'JSON Formatter',
+        desc:'Fix & format JSON-ish input',
+        about:'Accepts single quotes, unquoted keys, trailing commas, and // /* */ comments. Always outputs valid JSON.',
+        render: function(){
+            var wrap = el('div');
+            var tb = el('div', {class:'toolbar'});
+            var btnNormalize = el('button', {class:'primary', text:'Normalize →'});
+            var btnPretty   = el('button', {text:'Pretty'});
+            var btnMin      = el('button', {text:'Minify'});
+            var btnCompact  = el('button', {text:'Compact [objects per line]'});
+            var btnSort     = el('button', {text:'Sort keys'});
+            var btnCopy     = el('button', {text:'Copy output'});
+            var grid = el('div', {class:'grid-two'});
+            var a = el('textarea'); a.placeholder =
+                '{foo: "bar", list: [1,2,], /* comments ok */}\n' +
+                '// single quotes ok too\n' +
+                "{'a': 1}";
+            var b = el('textarea'); b.placeholder = 'Output (valid JSON)…';
+
+            function stripComments(s){
+                // Remove /* ... */ and // ... ; keep http:// by requiring non-colon before //
+                s = s.replace(/\/\*[\s\S]*?\*\//g, '');
+                s = s.replace(/(^|[^:])\/\/.*$/gm, '$1');
+                return s;
+            }
+            function singleToDoubleQuotedStrings(s){
+                // '...'(with escapes) → "..." (JSON)
+                return s.replace(/'([^'\\]|\\.)*'/g, function(m){
+                    var body = m.slice(1, -1);
+                    body = body.replace(/\\'/g, "'");   // unescape single quotes
+                    body = body.replace(/"/g, '\\"');   // escape double quotes
+                    return '"' + body + '"';
+                });
+            }
+            function quoteUnquotedKeys(s){
+                // {foo:1} , foo:1 → {"foo":1}
+                return s.replace(/([{\,]\s*)([A-Za-z_$][A-Za-z0-9_$]*)(\s*:)/g, '$1"$2"$3');
+            }
+            function removeTrailingCommas(s){ return s.replace(/,(\s*[}\]])/g, '$1'); }
+            function replaceSpecials(s){
+                // Make JSON.parse happy
+                return s.replace(/\b(undefined|NaN|Infinity|-Infinity)\b/g, 'null');
+            }
+            function normalizeJsonish(src){
+                var s = src == null ? '' : String(src);
+                s = stripComments(s);
+                s = singleToDoubleQuotedStrings(s);
+                s = quoteUnquotedKeys(s);
+                s = removeTrailingCommas(s);
+                s = replaceSpecials(s);
+                return s;
+            }
+            function parseLoose(){ return JSON.parse(normalizeJsonish(a.value)); }
+
+            function pretty(){ try{ b.value = JSON.stringify(parseLoose(), null, 2); }catch(e){ b.value=''; alert('Parse error: '+e.message); } }
+            function minify(){ try{ b.value = JSON.stringify(parseLoose()); }       catch(e){ b.value=''; alert('Parse error: '+e.message); } }
+
+            function sortKeys(value){
+                if (Array.isArray(value)) return value.map(sortKeys);
+                if (value && typeof value === 'object'){
+                    var out = {}; Object.keys(value).sort().forEach(function(k){ out[k] = sortKeys(value[k]); });
+                    return out;
+                }
+                return value;
+            }
+            function compactObjectsPerLine(){
+                try{
+                    var data = parseLoose();
+                    if (Array.isArray(data) && data.every(function(it){ return it && typeof it === 'object' && !Array.isArray(it); })){
+                        var lines = data.map(function(it){ return '  ' + JSON.stringify(it); }).join(',\n');
+                        b.value = '[\n' + lines + '\n]';   // no trailing comma
+                    } else {
+                        b.value = JSON.stringify(data);    // fallback: minified
+                    }
+                }catch(e){ b.value=''; alert('Parse error: '+e.message); }
+            }
+
+            on(btnNormalize,'click', pretty);
+            on(btnPretty,'click',   pretty);
+            on(btnMin,'click',      minify);
+            on(btnCompact,'click',  compactObjectsPerLine);
+            on(btnSort,'click', function(){
+                try{ b.value = JSON.stringify(sortKeys(parseLoose()), null, 2); }
+                catch(e){ b.value=''; alert('Parse error: '+e.message); }
+            });
+            on(btnCopy,'click', function(){ copyText(b.value||''); });
+
+            tb.appendChild(btnNormalize); tb.appendChild(btnPretty); tb.appendChild(btnMin);
+            tb.appendChild(btnCompact);   tb.appendChild(btnSort);  tb.appendChild(btnCopy);
+            grid.appendChild(a); grid.appendChild(b);
+            wrap.appendChild(tb); wrap.appendChild(grid);
+            return wrap;
+        }
+    });
+
+    // Lipsum Shuffle
+  register({
+    id:'lipsum-shuffle', icon:'🪄', name:'Lipsum Shuffle', desc:'Random lorem ipsum text', about:'Shuffles sentences from a sample Lorem Ipsum to generate filler text.',
+    render: function(){
+      var wrap = el('div'); var tb = el('div',{class:'toolbar'});
+      var countLbl = el('span',{text:'Sentences: 8'});
+      var count = el('input',{type:'range', min:'1', max:'40', value:'8'});
+      var gen = el('button',{class:'primary', text:'Generate'});
+      var copy = el('button',{text:'Copy'});
+      var out = el('textarea');
+      var corpus = ('Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum. Integer posuere erat a ante venenatis dapibus posuere velit aliquet. Aenean eu leo quam. Pellentesque ornare sem lacinia quam venenatis vestibulum. Cras mattis consectetur purus sit amet fermentum. Maecenas faucibus mollis interdum. Praesent commodo cursus magna, vel scelerisque nisl consectetur et.').split('. ').map(function(s){ return s.trim().replace(/[.]+$/,''); }).filter(function(s){ return s; });
+      function shuffle(arr){ for(var i=arr.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=arr[i]; arr[i]=arr[j]; arr[j]=t; } return arr; }
+      function generate(){ var n = parseInt(count.value,10)||8; var pick = shuffle(corpus.slice()).slice(0,n); out.value = pick.join('. ') + '.'; }
+      on(count,'input', function(){ countLbl.textContent = 'Sentences: '+this.value; });
+      on(gen,'click', generate); on(copy,'click', function(){ copyText(out.value||''); });
+      tb.appendChild(countLbl); tb.appendChild(count); tb.appendChild(gen); tb.appendChild(copy); wrap.appendChild(tb); wrap.appendChild(out); generate(); return wrap;
+    }
+  });
+
+  // Degrees ⇄ Radians
+  register({
+    id:'math-degs-rads', icon:'📐', name:'Degrees ⇄ Radians', desc:'Convert angles both ways', about:'Type in either field; the other updates instantly.',
+    render: function(){
+      var wrap = el('div'); var row = el('div',{class:'row'});
+      var dInp = el('input',{placeholder:'Degrees'});
+      var rInp = el('input',{placeholder:'Radians'});
+      var piLbl = el('span',{class:'badge', text:'π ≈ 3.1415926536'});
+      function syncFromDeg(){ var v = parseFloat(dInp.value); if(!isFinite(v)){ rInp.value=''; return; } rInp.value = (v * Math.PI / 180).toString(); }
+      function syncFromRad(){ var v = parseFloat(rInp.value); if(!isFinite(v)){ dInp.value=''; return; } dInp.value = (v * 180 / Math.PI).toString(); }
+      on(dInp,'input', syncFromDeg); on(rInp,'input', syncFromRad);
+      row.appendChild(dInp); row.appendChild(rInp); row.appendChild(piLbl); wrap.appendChild(row); return wrap;
+    }
+  });
+
+  // Media Player (URL or local file)
+  register({
+    id:'media-player', icon:'🎬', name:'Media Player', desc:'Play audio/video from file or URL', about:'Local files never leave your device. Some remote URLs may not allow playback due to CORS.',
+    render: function(){
+      var wrap = el('div'); var tb = el('div',{class:'toolbar'});
+      var file = el('input',{type:'file', accept:'audio/*,video/*'});
+      var url = el('input',{placeholder:'https://example.com/video.mp4', style:'min-width:360px;'});
+      var loadBtn = el('button',{class:'primary', text:'Load URL'});
+      var area = el('div'); var current = null; var currentURL = null;
+      function setSource(src, mime){ if(current){ current.pause && current.pause(); area.innerHTML=''; if(currentURL){ URL.revokeObjectURL(currentURL); currentURL=null; } }
+        var isVideo = (mime && mime.indexOf('video')===0) || /(\.mp4|\.webm|\.ogv|\.mov)$/i.test(src);
+        current = el(isVideo?'video':'audio',{controls:'', style:'width:100%; max-height:70vh; border:1px solid var(--border); border-radius:12px; background: var(--panel);'});
+        current.src = src; area.appendChild(current); current.play && current.play(); }
+      on(file,'change', function(){ if(!file.files || !file.files[0]) return; var f = file.files[0]; var urlObj = URL.createObjectURL(f); currentURL = urlObj; setSource(urlObj, f.type||''); });
+      on(loadBtn,'click', function(){ if(url.value) setSource(url.value,''); });
+      tb.appendChild(file); tb.appendChild(url); tb.appendChild(loadBtn); wrap.appendChild(tb); wrap.appendChild(area); return wrap;
+    }
+  });
+
+  // URL Encode/Decode
+  register({
+    id:'url-encode-decode', icon:'🔗', name:'URL Encode/Decode', desc:'encodeURIComponent / decodeURIComponent', about:'Great for query params & paths.',
+    render: function(){
+      var wrap = el('div'); var tb = el('div',{class:'toolbar'});
+      var enc = el('button',{class:'primary', text:'Encode →'});
+      var dec = el('button',{text:'← Decode'});
+      var copyBtn = el('button',{text:'Copy output'});
+      var grid = el('div',{class:'grid-two'});
+      var a = el('textarea'); a.placeholder='Raw text…';
+      var b = el('textarea'); b.placeholder='URL-encoded…';
+      on(enc,'click',function(){ try{ b.value = encodeURIComponent(a.value||''); }catch(e){ alert('Encode error: '+e.message); } });
+      on(dec,'click',function(){ try{ a.value = decodeURIComponent(b.value||''); }catch(e){ alert('Decode error: '+e.message); } });
+      on(copyBtn,'click',function(){ copyText(b.value||''); });
+      tb.appendChild(enc); tb.appendChild(dec); tb.appendChild(copyBtn); grid.appendChild(a); grid.appendChild(b); wrap.appendChild(tb); wrap.appendChild(grid); return wrap;
+    }
+  });
+
+  // White lamp
+  register({
+    id:'white', icon:'💡', name:'White (Lamp)', desc:'Full white screen for brightness', about:'Use as a soft white light. You can change color and go fullscreen.',
+    render: function(){
+      var wrap = el('div'); var tb = el('div',{class:'toolbar'});
+      var color = el('input',{type:'color', value:'#ffffff'});
+      var fsBtn = el('button',{class:'primary', text:'Fullscreen'});
+      var exitBtn = el('button',{text:'Exit FS'});
+      var pane = el('div',{style:'height:70vh; border:1px solid var(--border); border-radius:12px; background:#ffffff; display:flex; align-items:center; justify-content:center;'});
+      var hint = el('div',{class:'muted', text:'Click Fullscreen for max brightness'});
+      function apply(){ pane.style.background = color.value; document.body.style.background = color.value; }
+      on(color,'input', apply);
+      on(fsBtn,'click', function(){ if(pane.requestFullscreen) pane.requestFullscreen(); });
+      on(exitBtn,'click', function(){ if(document.fullscreenElement) document.exitFullscreen(); });
+      tb.appendChild(color); tb.appendChild(fsBtn); tb.appendChild(exitBtn); wrap.appendChild(tb); pane.appendChild(hint); wrap.appendChild(pane); apply(); return wrap;
+    }
+  });
+
+  // Notes
+  register({
+    id:'notes', icon:'📝', name:'Notes', desc:'Simple notepad with local save', about:'Plain text notes saved locally in your browser.',
+    render: function(){
+      var wrap = el('div');
+      var tb = el('div', {class:'toolbar'});
+      var btnSave = el('button', {class:'primary', text:'Save'});
+      var btnClear = el('button', {class:'danger', text:'Clear'});
+      var btnDownload = el('button', {text:'Download .txt'});
+      var ta = el('textarea');
+      ta.value = load('apphub.notes','');
+      on(btnSave,'click',function(){ save('apphub.notes', ta.value); btnSave.textContent='Saved ✓'; setTimeout(function(){ btnSave.textContent='Save'; }, 800); });
+      on(btnClear,'click',function(){ if(confirm('Clear notes?')){ ta.value=''; save('apphub.notes',''); } });
+      on(btnDownload,'click',function(){ download('notes.txt', ta.value); });
+      tb.appendChild(btnSave); tb.appendChild(btnClear); tb.appendChild(btnDownload);
+      wrap.appendChild(tb); wrap.appendChild(ta);
+      return wrap;
+    }
+  });
+
+  // To‑Do
+  register({
+    id:'todo', icon:'✅', name:'To‑Do', desc:'Tasks with checkboxes', about:'A very small to‑do list. Click a task to toggle done.',
+    render: function(){
+      var data = load('apphub.todo', []);
+      var wrap = el('div');
+      var tb = el('div', {class:'toolbar'});
+      var input = el('input', {placeholder:'New task…'});
+      var add = el('button', {class:'primary', text:'Add'});
+      var clear = el('button', {class:'danger', text:'Clear done'});
+      var exportBtn = el('button', {text:'Export JSON'});
+      var list = el('div', {class:'list'});
+
+      function render(){ list.innerHTML='';
+        data.forEach(function(it, idx){
+          var card = el('div', {class:'card'});
+          var row = el('div', {class:'row'});
+          var cb = el('input', {type:'checkbox'}); cb.checked = !!it.done;
+          var txt = el('div', {style:'flex:1; ' + (it.done?'text-decoration: line-through; color: var(--muted);':'')}); txt.textContent = it.text;
+          var del = el('button', {text:'Delete'});
+          on(cb,'change',function(){ it.done = cb.checked; save('apphub.todo', data); render(); });
+          on(txt,'click',function(){ it.done = !it.done; save('apphub.todo', data); render(); });
+          on(del,'click',function(){ data.splice(idx,1); save('apphub.todo', data); render(); });
+          row.appendChild(cb); row.appendChild(txt); row.appendChild(del); card.appendChild(row); list.appendChild(card);
+        });
+      }
+
+      function addItem(){ var t = (input.value||'').trim(); if(!t) return; data.push({text:t, done:false}); input.value=''; save('apphub.todo', data); render(); }
+      on(add,'click', addItem);
+      on(input,'keydown', function(e){ if(e.key==='Enter'){ addItem(); }});
+      on(clear,'click', function(){ data = data.filter(function(it){ return !it.done; }); save('apphub.todo', data); render(); });
+      on(exportBtn,'click', function(){ download('todo.json', JSON.stringify(data, null, 2)); });
+
+      tb.appendChild(input); tb.appendChild(add); tb.appendChild(clear); tb.appendChild(exportBtn);
+      wrap.appendChild(tb); wrap.appendChild(list);
+      render();
+      return wrap;
+    }
+  });
+
+  // Calculator (safe-ish)
+  register({
+    id:'calc', icon:'🧮', name:'Calculator', desc:'Eval arithmetic expressions', about:'Supports + − × ÷ % parentheses and decimals. Example: (2+3*5)/2',
+    render: function(){
+      var wrap = el('div');
+      var tb = el('div', {class:'toolbar'});
+      var inp = el('input', {placeholder:'Type expression, e.g. (2+3*5)/2'});
+      var btn = el('button', {class:'primary', text:'Calculate'});
+      var out = el('div'); out.innerHTML = '<p class="muted">Result will appear here.</p>';
+      function safeEval(src){
+        // allow digits, spaces, operators, parentheses, dot
+        if(!/^[-+*/%(). 0-9]+$/.test(src)) throw new Error('Only 0-9 . ( ) + - * / % allowed');
+        // eslint-disable-next-line no-new-func
+        return Function('return('+src+')')();
+      }
+      function calc(){ try{ var v = safeEval(inp.value.trim()); out.innerHTML = '<h3>'+ v +'</h3>'; }catch(e){ out.innerHTML = '<pre>'+ e.message +'</pre>'; } }
+      on(btn,'click', calc); on(inp,'keydown', function(e){ if(e.key==='Enter') calc(); });
+      tb.appendChild(inp); tb.appendChild(btn);
+      wrap.appendChild(tb); wrap.appendChild(out);
+      return wrap;
+    }
+  });
+
+  // Stopwatch
+  register({
+    id:'stopwatch', icon:'⏱️', name:'Stopwatch', desc:'Start / pause / reset', about:'Minimal stopwatch with millisecond precision.',
+    render: function(){
+      var wrap = el('div');
+      var display = el('h2', {text:'00:00.000'});
+      var tb = el('div', {class:'toolbar'});
+      var start = el('button', {class:'primary', text:'Start'});
+      var pause = el('button', {text:'Pause'});
+      var reset = el('button', {class:'danger', text:'Reset'});
+
+      var running=false, startAt=0, elapsed=0, rafId=0;
+      function fmt(ms){ var m = Math.floor(ms/60000); var s = Math.floor((ms%60000)/1000); var x = Math.floor(ms%1000); return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0')+'.'+String(x).padStart(3,'0'); }
+      function loop(){ if(!running) return; var now = performance.now(); var total = elapsed + (now - startAt); display.textContent = fmt(total); rafId = requestAnimationFrame(loop); }
+      on(start,'click',function(){ if(running) return; running=true; startAt=performance.now(); loop(); });
+      on(pause,'click',function(){ if(!running) return; running=false; elapsed += performance.now()-startAt; cancelAnimationFrame(rafId); });
+      on(reset,'click',function(){ running=false; elapsed=0; display.textContent='00:00.000'; cancelAnimationFrame(rafId); });
+
+      tb.appendChild(start); tb.appendChild(pause); tb.appendChild(reset);
+      wrap.appendChild(display); wrap.appendChild(tb);
+      return wrap;
+    }
+  });
+
+  // JSON Tools
+  register({
+    id:'json', icon:'{ }', name:'JSON Tools', desc:'Format / Minify / Sort keys', about:'Paste JSON on the left, get the result on the right. No upload; everything stays local.',
+    render: function(){
+      var wrap = el('div');
+      var tb = el('div', {class:'toolbar'});
+      var btnFmt = el('button', {class:'primary', text:'Format'});
+      var btnMini = el('button', {text:'Minify'});
+      var btnSort = el('button', {text:'Sort keys'});
+      var btnCopy = el('button', {text:'Copy output'});
+      var grid = el('div', {class:'grid-two'});
+      var a = el('textarea'); a.placeholder = '{"hello":"world"}';
+      var b = el('textarea'); b.placeholder = 'Output…';
+
+      function parse(){ try{ return JSON.parse(a.value); }catch(e){ alert('JSON parse error: '+e.message); throw e; } }
+      function sortKeys(value){
+        if(Array.isArray(value)) return value.map(function(v){ return sortKeys(v); });
+        if(value && typeof value === 'object'){
+          var out = {}; Object.keys(value).sort().forEach(function(k){ out[k] = sortKeys(value[k]); }); return out;
+        }
+        return value;
+      }
+      on(btnFmt,'click',function(){ try{ b.value = JSON.stringify(JSON.parse(a.value), null, 2); }catch(e){ b.value=''; alert('JSON parse error: '+e.message); } });
+      on(btnMini,'click',function(){ try{ b.value = JSON.stringify(JSON.parse(a.value)); }catch(e){ b.value=''; alert('JSON parse error: '+e.message); } });
+      on(btnSort,'click',function(){ try{ b.value = JSON.stringify(sortKeys(parse()), null, 2); }catch(e){} });
+      on(btnCopy,'click',function(){ copyText(b.value||''); });
+
+      tb.appendChild(btnFmt); tb.appendChild(btnMini); tb.appendChild(btnSort); tb.appendChild(btnCopy);
+      grid.appendChild(a); grid.appendChild(b);
+      wrap.appendChild(tb); wrap.appendChild(grid);
+      return wrap;
+    }
+  });
+
+  // Password Generator
+  register({
+    id:'pwd', icon:'🔐', name:'Password Generator', desc:'Random strings with options', about:'Generates random passwords locally in your browser.',
+    render: function(){
+      var wrap = el('div');
+      var tb = el('div', {class:'toolbar'});
+      var out = el('input', {readonly:'', placeholder:'Click Generate…', style:'flex:1;'});
+      var copy = el('button', {text:'Copy'});
+      var gen = el('button', {class:'primary', text:'Generate'});
+
+      var opt = el('div', {class:'row'});
+      var len = el('input', {type:'range', min:'8', max:'64', value: load('apphub.pwd.len', '16')+''});
+      var lenLbl = el('span', {text:'Length: '+len.value});
+      var lc = el('input', {type:'checkbox', checked:'', id:'lc'});
+      var uc = el('input', {type:'checkbox', checked:'', id:'uc'});
+      var dg = el('input', {type:'checkbox', checked:'', id:'dg'});
+      var sy = el('input', {type:'checkbox', id:'sy'});
+      var lab1 = el('label', {for:'lc', text:'a-z'});
+      var lab2 = el('label', {for:'uc', text:'A-Z'});
+      var lab3 = el('label', {for:'dg', text:'0-9'});
+      var lab4 = el('label', {for:'sy', text:'symbols'});
+
+      on(len,'input',function(){ lenLbl.textContent='Length: '+len.value; save('apphub.pwd.len', parseInt(len.value,10)); });
+      on(copy,'click',function(){ copyText(out.value||''); });
+      function randomChars(s){ var r=''; for(var i=0;i<parseInt(len.value,10);i++){ r+= s[Math.floor(Math.random()*s.length)]; } return r; }
+      function generate(){ var pool='';
+        if(lc.checked) pool+='abcdefghijklmnopqrstuvwxyz';
+        if(uc.checked) pool+='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        if(dg.checked) pool+='0123456789';
+        if(sy.checked) pool+='!@#$%^&*()-_=+[]{};:,./?';
+        if(!pool){ alert('Pick at least one set'); return; }
+        out.value = randomChars(pool);
+      }
+      on(gen,'click', generate);
+
+      tb.appendChild(out); tb.appendChild(copy); tb.appendChild(gen);
+      opt.appendChild(lenLbl); opt.appendChild(len); opt.appendChild(lc); opt.appendChild(lab1); opt.appendChild(uc); opt.appendChild(lab2); opt.appendChild(dg); opt.appendChild(lab3); opt.appendChild(sy); opt.appendChild(lab4);
+      wrap.appendChild(tb); wrap.appendChild(opt);
+      return wrap;
+    }
+  });
+
+  // --- boot ---
+  applyTheme();
+  renderList('');
+  var last = load('apphub.active', 'notes');
+  renderMain(last);
+
+  on(qs('#theme'),'click', toggleTheme);
+  on(qs('#search'),'input', function(){ renderList(this.value); });
+  // When the list re-renders, we still want the old active highlighted
+  on(document,'click', function(){ highlightActive(load('apphub.active','')); });
+
+  // Populate list initially and set active on click
+  renderList('');
+
+  // =====================
+  // Minimal self‑test set
+  // (Added to prevent regressions like invalid string escapes)
+  // =====================
+  (function selfTests(){
+    var out = [];
+    function t(name, fn){ try{ fn(); out.push('✅ ' + name); } catch(e){ console.error('[SelfTest]', name, e); out.push('❌ ' + name + ' — ' + e.message); } }
+
+    // Base64 UTF‑8 roundtrip
+    t('base64 utf8 roundtrip', function(){
+      function b64e(s){ var u=new TextEncoder().encode(s); var bin=''; for(var i=0;i<u.length;i++){ bin+=String.fromCharCode(u[i]); } return btoa(bin); }
+      function b64d(t){ var bin=atob(t); var u=new Uint8Array(bin.length); for(var i=0;i<bin.length;i++){ u[i]=bin.charCodeAt(i);} return new TextDecoder().decode(u); }
+      var s='✓ café ☕'; if(b64d(b64e(s))!==s) throw new Error('mismatch');
+    });
+
+    // URL encode/decode
+    t('url encode/decode', function(){ var s='a b&c=✓/ß?x=y'; if(decodeURIComponent(encodeURIComponent(s))!==s) throw new Error('mismatch'); });
+
+    // Degrees/radians
+    t('deg↔rad 180°', function(){ var rad = 180*Math.PI/180; if(Math.abs(rad-Math.PI)>1e-12) throw new Error('180° != π'); });
+
+    // JSON outline formatting (ensure \n used, no syntax errors)
+    t('json outline format markers', function(){
+      function outline(v,i){ i=i||0; var pad=Array(i+1).join('  '); if(Array.isArray(v)){ var s=pad+'['+'\n'; for(var j=0;j<v.length;j++){ s+=outline(v[j],i+1);} return s+pad+']'+'\n'; } else if(v&&typeof v==='object'){ var s2=pad+'{'+'\n'; var ks=Object.keys(v); for(var k=0;k<ks.length;k++){ var key=ks[k]; var x=v[key]; var t=(x===null?'null':Array.isArray(x)?'array':typeof x); s2+=pad+'  '+key+': '+t+'\n'; if(t==='object'||t==='array') s2+=outline(x,i+1);} return s2+pad+'}'+'\n'; } return pad+String(v)+'\n'; }
+      var s = outline({a:1,b:[2]},0); if(!/\[\n/.test(s) || !/\]\n/.test(s) || !/a: number/.test(s)) throw new Error('bad outline');
+    });
+
+    // Show in UI
+    var log = qs('#selftests-log'); if(log){ log.textContent = out.join('\n'); }
+  })();
+})();
+</script>
+</body>
+</html>

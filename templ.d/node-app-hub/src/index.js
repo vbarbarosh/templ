@@ -33,7 +33,7 @@ async function main()
         {req: 'ALL *', fn: page404},
     ]);
 
-    await express_run(app);
+    await express_run(app, 3000, process.env.LISTEN || 'localhost');
 }
 
 async function echo(req, res)
