@@ -23,33 +23,44 @@
 <script>
 vue_component('app', {
     template: `
-    <div class="fix-f vsplit oa">
-        <header>
-            <div class="title">🧰 App Hub</div>
-            <span class="badge" id="app-count">{{ plural(apps.length, '# app', '# apps') }}</span>
-            <div class="spacer"></div>
-            <input type="search" id="search" placeholder="Search apps…">
-            <button id="theme">Toggle theme</button>
-        </header>
-        <div class="fluid hsplit">
-            <div class="w250 oa">
-                <ul class="apps xm p12">
-                    <li v-for="item in apps" v-on:click="click_app(item)" v-bind:key="item.id" v-bind:class="{active: (item === active)}" class="app-item">
-                        <div class="ico">{{ item.icon }}</div>
-                        <div>
-                            <div class="name">{{ item.name }}</div>
-                            <div class="desc">{{ item.desc }}</div>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-            <div class="vsplit fluid p12 oa">
-                <div class="rel fluid panel">
-                    <iframe v-if="active" v-bind:src="active.page_url" class="abs-f ww hh oa xborder"></iframe>
+    <data-filter ref="filter" v-slot="filter" v-bind:items="apps" prop="search">
+        <div class="fix-f vsplit oa">
+            <header>
+                <div class="title">🧰 App Hub</div>
+                <span class="badge" id="app-count">{{ plural(apps.length, '# app', '# apps') }}</span>
+                <div class="spacer"></div>
+                <input ref="search"
+                       v-model="filter.pattern"
+                       v-on:keypress.enter="keypress_enter_search(filter)"
+                       type="search"
+                       placeholder="Search apps…" />
+                <button id="theme">Toggle theme</button>
+            </header>
+            <div class="fluid hsplit">
+                <div class="w250 oa">
+                    <ul class="apps xm p12">
+                        <li v-for="item in filter.computed_items"
+                            v-on:click="click_app(item)"
+                            v-bind:key="item.id"
+                            v-bind:class="{active: (item === active)}"
+                            v-bind:data-id="item.id"
+                            class="app-item">
+                            <div class="ico">{{ item.icon }}</div>
+                            <div>
+                                <div class="name">{{ item.name }}</div>
+                                <div class="desc">{{ item.desc }}</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="vsplit fluid p12 oa">
+                    <div class="rel fluid panel">
+                        <iframe v-if="active" v-bind:src="active.page_url" class="abs-f ww hh oa xborder"></iframe>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </data-filter>
     `,
     data: function () {
         return {
@@ -57,10 +68,28 @@ vue_component('app', {
             active: null,
         };
     },
+    watch: {
+        active: async function (item) {
+            localStorage.setItem('active_app_id', item?.id);
+            this.$refs.filter.pattern = '';
+            await this.$nextTick();
+            scrollIntoViewIfNeeded(document.querySelector(`[data-id="${item?.id}"]`));
+        },
+        apps: function () {
+            const active_app_id = localStorage.getItem('active_app_id');
+            this.active = this.apps.find(item => item.id === active_app_id) || this.apps[0];
+        },
+    },
     methods: {
         plural,
         refresh: async function () {
-            this.apps = await http_get_json('apps.json');
+            const apps = await http_get_json('apps.json');
+            apps.forEach(v => v.search = `${v.id} ${v.name} ${v.desc} ${v.about}`);
+            this.apps = apps;
+        },
+        keypress_enter_search: function (filter) {
+            this.active = filter.computed_items[0];
+            filter.pattern = '';
         },
         click_app: function (item) {
             this.active = item;
@@ -69,7 +98,27 @@ vue_component('app', {
     created: async function () {
         await blocking(this.refresh());
     },
+    mounted: function () {
+        document.addEventListener('keydown', () => this.$refs.search.focus());
+    },
 });
+
+function scrollIntoViewIfNeeded(elem, behavior = 'smooth', block = 'center')
+{
+    if (!elem) {
+        return;
+    }
+    const rect = elem.getBoundingClientRect();
+    const inView = (
+        rect.top >= 0 &&
+        rect.left >= 0 &&
+        rect.bottom <= window.innerHeight &&
+        rect.right <= window.innerWidth
+    );
+    if (!inView) {
+        elem.scrollIntoView({behavior, block});
+    }
+}
 </script>
 
 </body>
