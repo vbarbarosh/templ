@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('@dotenvx/dotenvx').config({path: `${__dirname}/.env`});
+require('@dotenvx/dotenvx').config({path: `${__dirname}/../.env`});
 
 const body_parser = require('body-parser');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
@@ -40,7 +40,7 @@ async function main()
         {req: 'ALL *', fn: page404},
     ]);
 
-    await express_run(app);
+    await express_run(app, 3000, process.env.LISTEN || 'localhost');
 }
 
 // GET /api/v1/articles.json
