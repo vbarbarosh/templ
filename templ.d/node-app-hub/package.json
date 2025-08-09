@@ -4,7 +4,8 @@
   "author": "Vladimir Barbaros <vladimir.barbarosh@gmail.com>",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "watch": "nodemon src/index.js"
   },
   "dependencies": {
     "@dotenvx/dotenvx": "^1.48.4",

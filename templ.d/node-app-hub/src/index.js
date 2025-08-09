@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-require('@dotenvx/dotenvx').config({path: `${__dirname}/.env`});
+require('@dotenvx/dotenvx').config({path: `${__dirname}/../.env`});
 
 const body_parser = require('body-parser');
 const cli = require('@vbarbarosh/node-helpers/src/cli');
