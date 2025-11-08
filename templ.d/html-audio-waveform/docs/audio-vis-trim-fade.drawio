@@ -1,0 +1,108 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/136.0.0.0 Safari/537.36" version="28.2.9">
+  <diagram name="Page-1" id="-6RnhSkSoIcYaRCNPnMf">
+    <mxGraphModel dx="1042" dy="626" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="2fjlBymED0TiYf7NZ6Sc-2" value="auio&lt;div&gt;visualization&lt;/div&gt;&lt;div&gt;trim&lt;/div&gt;&lt;div&gt;fade in&lt;/div&gt;&lt;div&gt;fade out&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="40" y="80" width="220" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="2fjlBymED0TiYf7NZ6Sc-3" value="audio track" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="80" y="280" width="500" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="2fjlBymED0TiYf7NZ6Sc-5" value="fadeOut" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="530" y="280" width="50" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="2fjlBymED0TiYf7NZ6Sc-6" value="fadeIn" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="80" y="280" width="50" height="40" as="geometry" />
+        </mxCell>
+        <UserObject label="https://pixabay.com/users/good_b_music-22836301/" link="https://pixabay.com/users/good_b_music-22836301/" id="3kIGnBp9XE69dWjULhN5-1">
+          <mxCell style="text;whiteSpace=wrap;textShadow=1;" vertex="1" parent="1">
+            <mxGeometry x="380" y="70" width="310" height="40" as="geometry" />
+          </mxCell>
+        </UserObject>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-2" value="waveform" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="160" y="360" width="290" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-3" value="&lt;div&gt;&lt;b&gt;There is a mismatch between my audio and the waveform. How do I fix it?&lt;/b&gt;&lt;/div&gt;&lt;div&gt;If you&#39;re using a &lt;b&gt;VBR&lt;/b&gt; (variable bit rate) audio file, there might be a mismatch between the audio and the waveform. This can be fixed by converting your file to &lt;b&gt;CBR&lt;/b&gt; (constant bit rate).&lt;/div&gt;&lt;div&gt;Alternatively, you can use the Web Audio shim which is more accurate.&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;align=left;verticalAlign=top;" vertex="1" parent="1">
+          <mxGeometry x="40" y="495" width="490" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-11" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="920" width="680" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-12" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="960" width="680" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-13" value="" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="80" y="1000" width="680" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-14" value="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="170" y="890" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-15" value="2" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="290" y="890" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-16" value="3" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="410" y="890" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-17" value="4" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="570" y="890" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-18" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="199.5" y="1090" as="sourcePoint" />
+            <mxPoint x="199.5" y="910" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-19" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="319.5" y="1090" as="sourcePoint" />
+            <mxPoint x="319.5" y="910" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-20" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="439.5" y="1100" as="sourcePoint" />
+            <mxPoint x="439.5" y="920" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-21" value="" style="endArrow=none;dashed=1;html=1;dashPattern=1 3;strokeWidth=2;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="599.5" y="1090" as="sourcePoint" />
+            <mxPoint x="599.5" y="910" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-22" value="Timeline" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="190" y="1150" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-23" value="audio-track" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="150" y="930" width="400" height="20" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-24" value="✅ 1) рисовать waveforms" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1230" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-25" value="✅ 2) реализовать ffmpeg-crop" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1290" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-26" value="✅&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;3) реализовать ffmpeg-drop&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1350" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-27" value="✅&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;4) проигрывать выбранную часть адуо (preview)&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="1230" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-28" value="✅&amp;nbsp;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;5) в UI нужно работать в формате hh:mm:ss.sss&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="1280" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-29" value="&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;6) zoom + minimap&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="1330" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-30" value="&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;timeline&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="1390" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="3kIGnBp9XE69dWjULhN5-31" value="&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;премещать audio-trak по timeline&lt;/span&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="310" y="1450" width="210" height="40" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
