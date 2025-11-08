@@ -1,0 +1,32 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+# ffmpeg -i input.mp3 -af "afade=t=in:st=0:d=1.0" -c:a mp3 output.mp3
+# ffmpeg -i input.mp3 -af "afade=t=in:st=0:d=0.1" -c:a libmp3lame -b:a 256k output.mp3
+#
+# | Parameter    | Meaning                                              |
+# | ------------ | ---------------------------------------------------- |
+# | `afade=t=in` | Fade-in effect                                       |
+# | `st=0`       | Start fade at 0 seconds                              |
+# | `d=1.0`      | Fade duration = 1 second (adjust as needed)          |
+# | `-c:a mp3`   | Re-encode to mp3 (required because fade is a filter) |
+
+# ffmpeg -i input.mp3 \
+#   -af "afade=t=in:st=0:d=0.5, afade=t=out:st=END-0.7:d=0.7" \
+#   -c:a libmp3lame -b:a 256k \
+#   output.mp3
+
+# ffmpeg -i $1 -af "afade=t=in:st=0:d=2.0" -c:a mp3 ggg-fade.mp3
+
+infile="$1"
+
+duration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$infile")
+
+ffmpeg -i "$infile" -af "afade=t=in:st=0:d=2.0, afade=t=out:st=$(echo "$duration-2.0" | bc -l):d=2.0" -c:a mp3 files/ggg-fade.mp3 -y

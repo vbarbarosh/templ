@@ -1,0 +1,22 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+# ffmpeg-crop $infile $outfile $begin $end
+
+infile="$1"
+outfile="$2"
+begin="$3" # 0..1
+end="$4" # 0..1
+
+duration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 $infile)
+begin_sec=$(echo "$duration*$begin" | bc -l)
+end_sec=$(echo "$duration*$end" | bc -l)
+
+ffmpeg -n -nostdin -v error -ss $begin_sec -to $end_sec -i "$infile" -c copy "$outfile"

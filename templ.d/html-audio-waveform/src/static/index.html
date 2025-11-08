@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link href="https://unpkg.com/@vbarbarosh/smcss@1.2.0/dist/reset.css" rel="stylesheet">
+    <link href="https://unpkg.com/@vbarbarosh/smcss@1.2.0/dist/sm.css" rel="stylesheet">
+    <link href="css/default.css" rel="stylesheet">
+    <title>audio-vis-trim-fade</title>
+    <style>
+        .z0 {
+            z-index: 0;
+        }
+        .sel-container {
+            background: #f88;
+        }
+        .sel-slider {
+            background: #8f8;
+        }
+        .sel-left {
+            position: absolute;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            background: #000;
+            opacity: 0.5;
+            cursor: col-resize;
+        }
+        .sel-right {
+            position: absolute;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            background: #000;
+            opacity: 0.5;
+            cursor: col-resize;
+        }
+    </style>
+</head>
+<body>
+
+<div id="app"></div>
+
+<!--
+<div id="waveform" class="h100 border oa resize"></div>
+<script type="module">
+import WaveSurfer from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesurfer.esm.js'
+const wavesurfer = WaveSurfer.create({
+  container: '#waveform',
+  waveColor: '#4F4A85',
+  progressColor: '#383351',
+  height: 100,
+  url: 'files/christmas-night-long-430802.mp3',
+});
+wavesurfer.on('interaction', () => {
+  //wavesurfer.play()
+});
+</script>
+-->
+
+<script src="https://unpkg.com/@vbarbarosh/ui-helpers@0.5.1/src/static/js/bundle.js"></script>
+<!--
+<script src="https://unpkg.com/@vbarbarosh/dd@1.9.0/dist/dd.js"></script>
+<script src="https://unpkg.com/jquery@3.7.1/dist/jquery.js"></script>
+<script src="https://unpkg.com/bluebird@3.7.2/js/browser/bluebird.js"></script>
+<script src="https://unpkg.com/vue@3.5.12/dist/vue.global.js"></script>
+-->
+<script src="https://unpkg.com/wavesurfer.js@7"></script>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/zoom.min.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/minimap.min.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+
+<script src="apis.js"></script>
+<script src="helpers.js"></script>
+<script src="components/audio-editor.js"></script>
+<script src="components/audio-picker.js"></script>
+<script src="components/markers.js"></script>
+<script src="components/timeline.js"></script>
+<script src="components/waveform.js"></script>
+<script src="components/modal-audio-editor.js"></script>
+
+<script>
+vue_component('app', {
+    template: `
+        <div class="abs-f hsplit">
+            <div class="p5">
+                <audio-picker v-model="audio" />
+                <!--<audio-picker v-on:update:modelValue="input_audio" />-->
+            </div>
+            <div class="fluid p5 dashed xborder-hr">
+                <div class="oa">
+                    <timeline v-bind:tracks="tracks" v-bind:duration="600" v-bind:pixels_per_second="pixels_per_second" />
+                </div>
+                <select v-model="pixels_per_second">
+                    <option>1</option>
+                    <option>2</option>
+                    <option>3</option>
+                    <option>4</option>
+                    <option>5</option>
+                    <option>10</option>
+                    <option>20</option>
+                    <option>30</option>
+                    <option>40</option>
+                    <option>50</option>
+                </select>
+
+                <audio-editor v-bind:audio="audio" class="w800 h400 border" />
+            </div>
+        </div>
+    `,
+    data: function () {
+        return {
+            audio: null,
+            tracks: [],
+            pixels_per_second: 2,
+        };
+    },
+    computed: {
+    },
+    methods: {
+        input_audio: function (audio) {
+            this.tracks.push({begin_sec: this.tracks.length, audio: JSON.parse(JSON.stringify(audio))});
+        },
+    },
+});
+
+// {begin, end}
+vue_component('vrbox', {
+    emits: ['started'],
+    props: ['value'],
+    template: `
+        <div v-on:mousedown="mousedown_container" class="sel-container">
+            <div v-on:mousedown="mousedown_slider"
+                 v-bind:style="slider_styles"
+                 class="abs sel-slider cur-pointer">
+                <div v-on:mousedown="mousedown_left" class="sel-left"></div>
+                <div v-on:mousedown="mousedown_right" class="sel-right"></div>
+            </div>
+        </div>
+    `,
+    computed: {
+        slider_styles: function () {
+            return {
+                position: 'absolute',
+                left: this.pc(this.value.begin),
+                width: this.pc(this.value.end - this.value.begin),
+                height: '100%',
+            };
+        },
+    },
+    methods: {
+        mousedown_container: function (event) {
+            if (event.target !== event.currentTarget) {
+                return;
+            }
+            console.log('mousedown_container');
+            this.$emit('started');
+            const _this = this;
+            const bbox = this.$el.getBoundingClientRect();
+            dd({
+                event,
+                begin: function (ctx) {
+                    ctx.pos = clamp(0, 1, (ctx.x - bbox.left)/bbox.width);
+                },
+                end: function () {
+                },
+                update: function ({pos, dx}) {
+                    const a = clamp(0, 1, pos);
+                    const b = clamp(0, 1, pos + dx/bbox.width);
+                    _this.value.begin = Math.min(a, b);
+                    _this.value.end = Math.max(a, b);
+                    console.log(_this.value.begin, _this.value.end);
+                },
+            });
+        },
+        mousedown_slider: function (event) {
+            if (event.target !== event.currentTarget) {
+                return;
+            }
+            console.log('mousedown_slider', this.$el.scrollWidth, this.$el.offsetWidth, this.$el.clientWidth);
+            this.$emit('started');
+            const _this = this;
+            const width = this.$el.scrollWidth;
+            const begin0 = this.value.begin;
+            const end0 = this.value.end;
+            dd({
+                event,
+                begin: function () {
+                },
+                end: function () {
+                },
+                update: function ({dx}) {
+                    _this.value.begin = clamp(0, 1, begin0 + dx/width);
+                    _this.value.end = clamp(0, 1, end0 + dx/width);
+                },
+            });
+        },
+        mousedown_left: function (event) {
+            const _this = this;
+            const width = this.$el.clientWidth;
+            const begin0 = this.value.begin;
+            this.$emit('started');
+            dd({
+                event,
+                begin: function () {
+                },
+                end: function () {
+                },
+                update: function ({dx}) {
+                    _this.value.begin = clamp(0, 1, begin0 + dx/width);
+                },
+            });
+        },
+        mousedown_right: function (event) {
+            const _this = this;
+            const width = this.$el.clientWidth;
+            const end0 = this.value.end;
+            this.$emit('started');
+            dd({
+                event,
+                begin: function () {
+                },
+                end: function () {
+                },
+                update: function ({dx}) {
+                    _this.value.end = clamp(0, 1, end0 + dx/width);
+                },
+            });
+        },
+    },
+});
+
+</script>
+
+</body>
+</html>

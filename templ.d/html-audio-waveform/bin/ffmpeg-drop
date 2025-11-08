@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+BLACK="\e[30m" RED="\e[31m" GREEN="\e[32m" YELLOW="\e[33m" BLUE="\e[34m"
+PURPLE="\e[35m" CYAN="\e[36m" WHITE="\e[37m" RESET="\e[0m"
+
+EXIT_MESSAGE="${RED}ffmpeg-drop failed${RESET}"
+
+# http://redsymbol.net/articles/bash-exit-traps/
+# http://redsymbol.net/articles/unofficial-bash-strict-mode/#essential-cleanup
+tempdir=`mktemp -d -t tmp.XXXXXXXXXX`
+trap 'rm -rf $tempdir; test -n "$EXIT_MESSAGE" && echo -e "$EXIT_MESSAGE"' EXIT
+
+# ffmpeg-drop $infile $outfile $begin $end
+
+infile="$1"
+outfile="$2"
+begin="$3" # 0..1
+end="$4" # 0..1
+
+duration=$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$infile")
+begin_sec=$(echo "$duration*$begin" | bc -l)
+end_sec=$(echo "$duration*$end" | bc -l)
+
+if awk "BEGIN { exit ($begin_sec <= 0 ? 0 : 1) }"; then
+    ffmpeg -nostdin -v error -ss "$end_sec" -i "$infile" -c copy "$outfile"
+else
+    tmp1="$tempdir/before.mp3"
+    tmp2="$tempdir/after.mp3"
+    ffmpeg -nostdin -v error -ss 0 -to "$begin_sec" -i "$infile" -c copy "$tmp1"
+    ffmpeg -nostdin -v error -ss "$end_sec" -i "$infile" -c copy "$tmp2"
+    ffmpeg -nostdin -v error -i "concat:$tmp1|$tmp2" -c copy "$outfile"
+fi
+
+EXIT_MESSAGE=

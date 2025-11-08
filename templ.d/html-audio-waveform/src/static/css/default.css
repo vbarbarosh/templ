@@ -1,0 +1,11 @@
+.max-content {
+    width: max-content;
+}
+
+.audio-editor__container {
+    position: relative;
+    overflow: hidden;
+}
+
+.audio-editor__viewport {
+}

@@ -1,0 +1,102 @@
+#!/usr/bin/env node
+
+const body_parser = require('body-parser');
+const cli = require('@vbarbarosh/node-helpers/src/cli');
+const express = require('express');
+const express_log = require('@vbarbarosh/express-helpers/src/express_log');
+const express_params = require('@vbarbarosh/express-helpers/src/express_params');
+const express_routes = require('@vbarbarosh/express-helpers/src/express_routes');
+const express_run = require('@vbarbarosh/express-helpers/src/express_run');
+const fs_mkdirp = require('@vbarbarosh/node-helpers/src/fs_mkdirp');
+const make = require('@vbarbarosh/type-helpers/src/make');
+const fs_tempdir = require('@vbarbarosh/node-helpers/src/fs_tempdir');
+const fs_copy = require('@vbarbarosh/node-helpers/src/fs_copy');
+const shell = require('@vbarbarosh/node-helpers/src/shell');
+
+cli(main);
+
+async function main()
+{
+    const app = express();
+
+    await fs_mkdirp(`${__dirname}/../data/logs`);
+
+    app.use(express_log({
+        file: () => `${__dirname}/../data/logs/http-${new Date().toJSON().substring(0, 10)}.log`,
+    }));
+
+    app.use(express.static(`${__dirname}/static`));
+    app.use('/files', express.static(`${__dirname}/../files`));
+    app.use(body_parser.json());
+
+    express_routes(app, [
+        ...require('./routes/files'),
+        ...require('./routes/ffmpeg'),
+        {req: 'GET /', fn: echo},
+        {req: 'GET /t/:size/*', fn: thumbnail},
+        {req: 'GET /api/v1/articles.json', fn: route_articles_list},
+        {req: 'POST /api/v1/articles', fn: route_articles_create},
+        {req: 'DELETE /api/v1/articles/:article_uid', fn: route_articles_delete},
+        {req: 'PATCH /api/v1/articles/:article_uid', fn: route_articles_update},
+        {req: 'PUT /api/v1/articles/:article_uid', fn: route_articles_replace},
+        {req: 'ALL *', fn: page404},
+    ]);
+
+    await express_run(app, 3000, process.env.LISTEN || 'localhost');
+}
+
+// GET /api/v1/articles.json
+async function route_articles_list(req, res)
+{
+    res.send({
+        limit: 10,
+        offset: 0,
+        total: 100,
+        items: [],
+    });
+}
+
+// POST /api/v1/articles
+async function route_articles_create(req, res)
+{
+    res.status({uid: 'na', message: 'POST /api/v1/articles'});
+}
+
+// DELETE /api/v1/articles/:article_uid
+async function route_articles_delete(req, res)
+{
+    const {article_uid} = req.params;
+    res.status({uid: article_uid, message: `DELETE /api/v1/articles/${articles}`});
+}
+
+// PATCH /api/v1/articles/:article_uid
+async function route_articles_update(req, res)
+{
+    const {article_uid} = req.params;
+    res.status({uid: article_uid, message: `PATCH /api/v1/articles/${articles}`});
+}
+
+// PUT /api/v1/articles/:article_uid
+async function route_articles_replace(req, res)
+{
+    const {article_uid} = req.params;
+    res.status({uid: article_uid, message: `PUT /api/v1/articles/${articles}`});
+}
+
+async function echo(req, res)
+{
+    res.status(200).send(express_params(req));
+}
+
+async function thumbnail(req, res)
+{
+    const size = make(req.params.size, {type: 'int', min: 32, max: 2048, default: 1024});
+    const path = make(req.params['0'], {type: 'str', default: ''});
+
+    res.status(200).send({size, path, express_params: express_params(req)});
+}
+
+async function page404(req, res)
+{
+    res.status(404).send(`Page not found: ${req.path}`);
+}
