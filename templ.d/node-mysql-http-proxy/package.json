@@ -1,0 +1,22 @@
+{
+  "name": "hello",
+  "version": "0.0.0",
+  "author": "Vladimir Barbaros <vladimir.barbarosh@gmail.com>",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "watch": "nodemon src/index.js"
+  },
+  "dependencies": {
+    "@dotenvx/dotenvx": "^1.48.4",
+    "@vbarbarosh/express-helpers": "^2.2.1",
+    "@vbarbarosh/node-helpers": "^3.66.1",
+    "@vbarbarosh/type-helpers": "^0.2.0",
+    "body-parser": "^2.2.0",
+    "express": "^4.21.2",
+    "mysql2": "^3.15.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
