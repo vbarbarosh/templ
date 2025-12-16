@@ -11,10 +11,10 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@vbarbarosh/node-helpers": "^3.64.0",
-    "@vbarbarosh/type-helpers": "^0.1.0",
+    "@vbarbarosh/node-helpers": "3.74.0",
+    "@vbarbarosh/type-helpers": "0.2.0",
     "cuid": "^3.0.0",
-    "electron": "^34.2.0",
+    "electron": "39.2.7",
     "node-pty": "^1.0.0"
   },
   "devDependencies": {
