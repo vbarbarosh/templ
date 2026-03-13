@@ -1,4 +1,4 @@
-FROM node:22.15.0
+FROM node:24.14.0
 
 # https://github.com/Yelp/dumb-init
 ADD --chmod=755 https://github.com/Yelp/dumb-init/releases/download/v1.2.5/dumb-init_1.2.5_x86_64 /usr/bin/dumb-init
