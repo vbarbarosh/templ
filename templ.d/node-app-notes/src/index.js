@@ -102,6 +102,14 @@ async function thumbnail(req, res)
         return;
     }
 
+    const thumb_file = fs_path_resolve(`${__dirname}/../data/thumbnails/${size}/${path}`);
+
+    // ✅ serve cached thumbnail
+    if (await fs_exists(thumb_file)) {
+        res.sendFile(thumb_file);
+        return;
+    }
+
     const meta = await sharp(image_file).metadata();
     if (meta.format === 'svg') {
         res.type('svg').sendFile(image_file);
@@ -109,6 +117,11 @@ async function thumbnail(req, res)
     }
 
     const buf = await sharp(image_file).resize(size).toBuffer();
+
+    // ✅ persist thumbnail
+    await fs_mkdirp(fs_path_dirname(thumb_file));
+    await fs_write(thumb_file, buf);
+
     res.type(meta.format).send(buf);
 }
 
@@ -323,9 +336,11 @@ async function notes_upload_file(req, res)
 
     const lstat = await fs_lstat(file_path);
     const name = fs_path_basename(file_path);
-    const url = `/r/${name}/files/${file}`;
-    const thumbnail_url = await is_image(`${d}/${name}/files/${file}`)
-        ? `/t/1024/${name}/files/${file}` : null ;
+
+    const relative = fs_path_safe_relative(fs_path_resolve(d, 'files'), file_path);
+    const url = `/r/${note_uid}/files/${relative}`;
+    const thumbnail_url = await is_image(`${d}/${name}/files/${relative}`)
+        ? `/t/1024/${name}/files/${relative}` : null ;
     res.send({
         name,
         url,
@@ -348,10 +363,10 @@ function now_fs()
     ].map(n => n.toString().padStart(2, '0')).join('').replace('xx', '_');
 }
 
-async function is_image(buf)
+async function is_image(buf_or_path)
 {
     try {
-        await sharp(buf).metadata();
+        await sharp(buf_or_path).metadata();
         return true;
     }
     catch (error) {
