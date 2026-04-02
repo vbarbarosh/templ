@@ -19,6 +19,7 @@ RUN echo Installing basic tools... \
         pv \
         silversearcher-ag \
         tree \
+        git \
     && rm -rf /var/lib/apt/lists/*
 
 RUN echo Installing Node.js 24.14.1 \
