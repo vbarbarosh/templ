@@ -39,4 +39,7 @@ USER ubuntu
 RUN echo Installing claude... \
     && curl -fsSL https://claude.ai/install.sh | bash
 
+RUN echo Installing codex... \
+    && npm i -g @openai/codex
+
 WORKDIR /app
