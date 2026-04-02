@@ -40,6 +40,7 @@ RUN echo Installing claude... \
     && curl -fsSL https://claude.ai/install.sh | bash
 
 RUN echo Installing codex... \
-    && npm i -g @openai/codex
+    && npm i -g @openai/codex \
+    && mkdir $HOME/.codex
 
 WORKDIR /app
