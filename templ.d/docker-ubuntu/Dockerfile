@@ -43,4 +43,12 @@ RUN echo Installing codex... \
     && npm i -g @openai/codex \
     && mkdir $HOME/.codex
 
+USER root
+RUN echo Installing playwright deps... \
+    && npx playwright install-deps
+
+USER ubuntu
+RUN echo Installing playwright... \
+    && npx playwright install
+
 WORKDIR /app
