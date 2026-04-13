@@ -17,6 +17,7 @@ RUN echo Installing basic tools... \
         pciutils \
         parallel \
         pv \
+        ripgrep \
         silversearcher-ag \
         tree \
         git \
