@@ -18,6 +18,7 @@ RUN echo Installing basic tools... \
         parallel \
         pv \
         ripgrep \
+        bubblewrap \
         silversearcher-ag \
         tree \
         git \
