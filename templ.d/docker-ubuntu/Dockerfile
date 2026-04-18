@@ -6,6 +6,7 @@ RUN echo Installing basic tools... \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
+        zip unzip \
         wget curl vim \
         htop \
         man \
@@ -31,6 +32,9 @@ RUN echo Installing Node.js 24.14.1 \
     && node --version \
     && npm --version
 
+RUN echo Installing playwright... \
+    && npx playwright install-deps
+
 # RUN echo Configuring bash... \
 #     && echo >> $HOME/.bashrc \
 #     && echo 'export PATH="$HOME/.local/bin:$PATH"' >> $HOME/.bashrc
@@ -38,19 +42,14 @@ RUN echo Installing Node.js 24.14.1 \
 ENV PATH="/home/ubuntu/.local/bin:${PATH}"
 USER ubuntu
 
+RUN echo Installing playwright... \
+    && npx playwright install
+
 RUN echo Installing claude... \
     && curl -fsSL https://claude.ai/install.sh | bash
 
 RUN echo Installing codex... \
     && npm i -g @openai/codex \
     && mkdir $HOME/.codex
-
-USER root
-RUN echo Installing playwright deps... \
-    && npx playwright install-deps
-
-USER ubuntu
-RUN echo Installing playwright... \
-    && npx playwright install
 
 WORKDIR /app
