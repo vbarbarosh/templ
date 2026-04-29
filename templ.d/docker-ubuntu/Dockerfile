@@ -23,6 +23,9 @@ RUN echo Installing basic tools... \
         silversearcher-ag \
         tree \
         git \
+        yt-dlp \
+        ffmpeg \
+        imagemagick \
     && rm -rf /var/lib/apt/lists/*
 
 RUN echo Installing Node.js 24.14.1 \
