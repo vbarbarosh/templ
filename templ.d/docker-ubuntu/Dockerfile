@@ -19,7 +19,6 @@ RUN echo Installing basic tools... \
         parallel \
         pv \
         ripgrep \
-        bubblewrap \
         silversearcher-ag \
         tree \
         git \
@@ -38,15 +37,13 @@ RUN echo Installing Node.js 24.14.1 \
 RUN echo Installing playwright... \
     && npx playwright install-deps
 
-# RUN echo Configuring bash... \
-#     && echo >> $HOME/.bashrc \
-#     && echo 'export PATH="$HOME/.local/bin:$PATH"' >> $HOME/.bashrc
-
 ENV PATH="/home/ubuntu/.local/bin:${PATH}"
 USER ubuntu
 
 RUN echo Installing playwright... \
     && npx playwright install
+
+RUN echo 0
 
 RUN echo Installing claude... \
     && curl -fsSL https://claude.ai/install.sh | bash
@@ -54,5 +51,10 @@ RUN echo Installing claude... \
 RUN echo Installing codex... \
     && npm i -g @openai/codex \
     && mkdir $HOME/.codex
+
+RUN echo Configuring bash... \
+    && echo >> $HOME/.bashrc \
+    && echo >> $HOME/.bashrc 'alias codex="codex -a never -s danger-full-access"' \
+    && echo >> $HOME/.bashrc 'export PATH="$HOME/.local/bin:$PATH"'
 
 WORKDIR /app
