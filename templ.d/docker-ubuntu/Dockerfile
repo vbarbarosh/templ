@@ -6,6 +6,7 @@ RUN echo Installing basic tools... \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
+        file \
         zip unzip \
         wget curl vim \
         htop \
