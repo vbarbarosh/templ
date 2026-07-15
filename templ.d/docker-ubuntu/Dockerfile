@@ -34,23 +34,49 @@ RUN echo Installing Node.js 24.14.1 \
     && node --version \
     && npm --version
 
-RUN echo Installing playwright... \
-    && npx playwright install-deps
-
+ENV NPM_CONFIG_PREFIX="/home/ubuntu/.local"
+ENV NODE_PATH="/home/ubuntu/.local/lib/node_modules"
 ENV PATH="/home/ubuntu/.local/bin:${PATH}"
+ENV PLAYWRIGHT_BROWSERS_PATH="/home/ubuntu/.cache/ms-playwright"
+ENV PUPPETEER_CACHE_DIR="/home/ubuntu/.cache/puppeteer"
+
 USER ubuntu
 
-RUN echo Installing playwright... \
-    && npx playwright install
+RUN echo Installing Playwright 1.61.1 and Puppeteer 25.3.0... \
+    && PUPPETEER_SKIP_DOWNLOAD=true npm install --global \
+        playwright@1.61.1 \
+        puppeteer@25.3.0 \
+    && playwright --version \
+    && node -e "console.log('Puppeteer ' + require('puppeteer/package.json').version)"
 
-RUN echo 0
+USER root
+
+RUN echo Installing browser system dependencies... \
+    && playwright install-deps \
+    && rm -rf /var/lib/apt/lists/*
+
+USER ubuntu
+
+RUN echo Installing Playwright browsers... \
+    && playwright install chromium firefox webkit \
+    && playwright install --list
+
+RUN echo Installing Puppeteer browsers... \
+    && puppeteer browsers install
 
 RUN echo Installing claude... \
     && curl -fsSL https://claude.ai/install.sh | bash
 
-RUN echo Installing codex... \
-    && npm i -g @openai/codex \
-    && mkdir $HOME/.codex
+# Remote ADD contents participate in Docker's cache key, so a new npm `latest`
+# version invalidates the Codex layer without rebuilding the browser layers.
+ADD --chown=ubuntu:ubuntu https://registry.npmjs.org/@openai%2Fcodex/latest /tmp/codex-package.json
+
+RUN CODEX_VERSION="$(jq -r .version /tmp/codex-package.json)" \
+    && echo "Installing Codex ${CODEX_VERSION}..." \
+    && npm install --global "@openai/codex@${CODEX_VERSION}" \
+    && codex --version \
+    && rm /tmp/codex-package.json \
+    && mkdir -p "$HOME/.codex"
 
 RUN echo Configuring bash... \
     && echo >> $HOME/.bashrc \
