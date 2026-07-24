@@ -65,8 +65,15 @@ RUN echo Installing Playwright browsers... \
 RUN echo Installing Puppeteer browsers... \
     && puppeteer browsers install
 
-RUN echo Installing claude... \
-    && curl -fsSL https://claude.ai/install.sh | bash
+# Remote ADD contents participate in Docker's cache key, so a new npm `latest`
+# version invalidates the Claude layer without rebuilding the browser layers.
+ADD --chown=ubuntu:ubuntu https://registry.npmjs.org/@anthropic-ai%2Fclaude-code/latest /tmp/claude-package.json
+
+RUN CLAUDE_VERSION="$(jq -r .version /tmp/claude-package.json)" \
+    && echo "Installing Claude ${CLAUDE_VERSION}..." \
+    && curl -fsSL https://claude.ai/install.sh | bash -s "${CLAUDE_VERSION}" \
+    && "$HOME/.local/bin/claude" --version \
+    && rm /tmp/claude-package.json
 
 # Remote ADD contents participate in Docker's cache key, so a new npm `latest`
 # version invalidates the Codex layer without rebuilding the browser layers.
