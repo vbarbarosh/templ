@@ -5,9 +5,6 @@
 set -o nounset -o errexit -o pipefail
 
 # Network data Script by Jonas Keidel 2012
-#
-# Copied from
-# scp bn.prod.ryzen5:/usr/local/bin/netdata
 
 LANG=C
 echo Network data:

@@ -4,9 +4,6 @@
 # http://redsymbol.net/articles/unofficial-bash-strict-mode
 set -o nounset -o errexit -o pipefail
 
-# Copied from
-# scp bn.prod.ryzen5:/usr/local/bin/hwdata
-
 echo Hardware data:
 echo
 
