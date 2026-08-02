@@ -27,40 +27,58 @@ errorlog=$vardir/mysql-error.log
 
 mkdir -p $rundir $redisdir
 
-# The system schema is what makes a data directory usable; a bare directory is
-# either untouched or left over from an initialization that did not finish.
-if ! test -d $datadir/mysql; then
-    echo Initializing MySQL data directory...
-    rm -rf $datadir
-    mkdir -p $datadir
-    mysqld --no-defaults --initialize-insecure --datadir=$datadir --log-error=$errorlog
+function mysql_is_running()
+{
+    mysqladmin --no-defaults --socket=$rundir/mysqld.sock ping > /dev/null 2>&1
+}
+
+function redis_is_running()
+{
+    redis-cli -h 127.0.0.1 -p 6379 ping > /dev/null 2>&1
+}
+
+if mysql_is_running; then
+    echo MySQL is already running
+else
+    # The system schema is what makes a data directory usable; a bare directory
+    # is either untouched or left over from an init that did not finish.
+    if ! test -d $datadir/mysql; then
+        echo Initializing MySQL data directory...
+        rm -rf $datadir
+        mkdir -p $datadir
+        mysqld --no-defaults --initialize-insecure --datadir=$datadir --log-error=$errorlog
+    fi
+
+    echo Starting MySQL...
+    mysqld --no-defaults \
+        --datadir=$datadir \
+        --socket=$rundir/mysqld.sock \
+        --pid-file=$rundir/mysqld.pid \
+        --log-error=$errorlog \
+        --bind-address=127.0.0.1 \
+        --port=3306 \
+        --mysqlx=0 \
+        --daemonize
+
+    echo Waiting for MySQL...
+    for i in `seq 30`; do
+        if mysql_is_running; then
+            break
+        fi
+        sleep 1
+    done
 fi
 
-echo Starting MySQL...
-mysqld --no-defaults \
-    --datadir=$datadir \
-    --socket=$rundir/mysqld.sock \
-    --pid-file=$rundir/mysqld.pid \
-    --log-error=$errorlog \
-    --bind-address=127.0.0.1 \
-    --port=3306 \
-    --mysqlx=0 \
-    --daemonize
-
-echo Starting Redis...
-redis-server \
-    --bind 127.0.0.1 \
-    --port 6379 \
-    --dir $redisdir \
-    --daemonize yes
-
-echo Waiting for MySQL...
-for i in `seq 30`; do
-    if mysqladmin --no-defaults --socket=$rundir/mysqld.sock ping > /dev/null 2>&1; then
-        break
-    fi
-    sleep 1
-done
+if redis_is_running; then
+    echo Redis is already running
+else
+    echo Starting Redis...
+    redis-server \
+        --bind 127.0.0.1 \
+        --port 6379 \
+        --dir $redisdir \
+        --daemonize yes
+fi
 
 if test -n "$database"; then
     mysql --no-defaults --socket=$rundir/mysqld.sock -u root -e "CREATE DATABASE IF NOT EXISTS \`$database\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
