@@ -86,6 +86,52 @@ RUN CODEX_VERSION="$(jq -r .version /tmp/codex-package.json)" \
     && rm /tmp/codex-package.json \
     && mkdir -p "$HOME/.codex"
 
+USER root
+
+# A PHP application can then run entirely inside this container, with no access
+# to anything on the host.
+RUN echo Installing PHP and extensions... \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        php-cli \
+        php-bcmath \
+        php-curl \
+        php-gd \
+        php-gmp \
+        php-intl \
+        php-mbstring \
+        php-mongodb \
+        php-mysql \
+        php-redis \
+        php-soap \
+        php-xml \
+        php-zip \
+    && php --version \
+    && php -m \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN echo Installing Composer... \
+    && curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php \
+    && php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer \
+    && rm /tmp/composer-setup.php \
+    && composer --version
+
+# Ubuntu 24.04 ships MySQL 8.0. Staying with the distribution package avoids
+# adding a third-party apt repository.
+RUN echo Installing MySQL and Redis... \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        mysql-server \
+        mysql-client \
+        redis-server \
+    && rm -rf /var/lib/apt/lists/*
+
+# Starts both as the container user, listening on 127.0.0.1 only
+COPY files/bin/services /usr/local/bin/services
+RUN chmod 0755 /usr/local/bin/services
+
+USER ubuntu
+
 RUN echo Configuring bash... \
     && echo >> $HOME/.bashrc \
     && echo >> $HOME/.bashrc 'alias codex="codex -a never -s danger-full-access"' \

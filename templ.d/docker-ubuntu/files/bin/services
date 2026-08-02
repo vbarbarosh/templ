@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+script=`realpath $0`
+scriptdir=`dirname $script`
+scriptname=`basename $script`
+
+# Starts MySQL and Redis as the current user. No root, no sudo, and both listen
+# on 127.0.0.1 only, so nothing is reachable from outside this container.
+#
+# Data lives under $HOME, not /var/lib, because the container user does not own
+# the system directories the distribution packages expect.
+#
+# services            start both services
+# services mydb       start both services and create a database
+
+database=${1:-}
+user=`id -un`
+vardir=$HOME/.local/var
+datadir=$vardir/mysql
+rundir=$vardir/run
+redisdir=$vardir/redis
+
+mkdir -p $rundir $redisdir
+
+if ! test -d $datadir; then
+    echo Initializing MySQL data directory...
+    mkdir -p $datadir
+    mysqld --initialize-insecure --user=$user --datadir=$datadir
+fi
+
+echo Starting MySQL...
+mysqld --user=$user \
+    --datadir=$datadir \
+    --socket=$rundir/mysqld.sock \
+    --pid-file=$rundir/mysqld.pid \
+    --bind-address=127.0.0.1 \
+    --port=3306 \
+    --mysqlx=0 \
+    --daemonize
+
+echo Starting Redis...
+redis-server \
+    --bind 127.0.0.1 \
+    --port 6379 \
+    --dir $redisdir \
+    --daemonize yes
+
+echo Waiting for MySQL...
+for i in `seq 30`; do
+    if mysqladmin --socket=$rundir/mysqld.sock ping > /dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+
+if test -n "$database"; then
+    mysql --socket=$rundir/mysqld.sock -u root -e "CREATE DATABASE IF NOT EXISTS \`$database\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+fi
+
+echo
+mysql --socket=$rundir/mysqld.sock -u root -e 'SELECT VERSION() AS mysql'
+echo -n 'redis: '
+redis-cli ping
+echo
+echo "MySQL  127.0.0.1:3306  socket=$rundir/mysqld.sock  user=root  password="
+echo "Redis  127.0.0.1:6379"
+echo
