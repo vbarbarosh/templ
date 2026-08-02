@@ -96,19 +96,31 @@ RUN echo Installing PHP and extensions... \
         php-cli \
         php-bcmath \
         php-curl \
+        php-dev \
         php-gd \
         php-gmp \
         php-intl \
         php-mbstring \
         php-mongodb \
         php-mysql \
-        php-redis \
+        php-pear \
         php-soap \
         php-xml \
         php-zip \
     && php --version \
     && php -m \
     && rm -rf /var/lib/apt/lists/*
+
+# Ubuntu ships phpredis 5.3.7, which throws "Redis server went away" when
+# Redis::setOption() is called before connect(). Applications that set options
+# on a fresh client need 6.x, so build it from PECL rather than apt.
+RUN echo Installing phpredis from PECL... \
+    && yes '' | pecl install redis \
+    && php_version=`php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;'` \
+    && echo extension=redis.so > /etc/php/$php_version/mods-available/redis.ini \
+    && phpenmod redis \
+    && php -r 'exit(extension_loaded("redis") ? 0 : 1);' \
+    && php -r 'echo "phpredis ", phpversion("redis"), PHP_EOL;'
 
 RUN echo Installing Composer... \
     && curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php \
