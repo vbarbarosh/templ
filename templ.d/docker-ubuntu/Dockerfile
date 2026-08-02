@@ -126,7 +126,14 @@ RUN echo Installing MySQL and Redis... \
         redis-server \
     && rm -rf /var/lib/apt/lists/*
 
-# Starts both as the container user, listening on 127.0.0.1 only
+RUN echo Installing MinIO... \
+    && curl -fsSL https://dl.min.io/server/minio/release/linux-amd64/minio -o /usr/local/bin/minio \
+    && curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc \
+    && chmod 0755 /usr/local/bin/minio /usr/local/bin/mc \
+    && minio --version \
+    && mc --version
+
+# Starts all three as the container user, listening on 127.0.0.1 only
 COPY files/bin/services /usr/local/bin/services
 RUN chmod 0755 /usr/local/bin/services
 

@@ -8,24 +8,27 @@ script=`realpath $0`
 scriptdir=`dirname $script`
 scriptname=`basename $script`
 
-# Starts MySQL and Redis as the current user. No root, no sudo, and both listen
-# on 127.0.0.1 only, so nothing is reachable from outside this container.
+# Starts MySQL, Redis and MinIO as the current user. No root, no sudo, and all
+# of them listen on 127.0.0.1 only, so nothing is reachable from outside this
+# container.
 #
 # Data lives under $HOME, not /var/lib, because the container user does not own
 # the system directories the distribution packages expect. --no-defaults skips
 # /etc/mysql, which pins user=mysql and an error log under /var/log.
 #
-# services            start both services
-# services mydb       start both services and create a database
+# services            start every service
+# services myapp      also create a database and a bucket named myapp
 
-database=${1:-}
+name=${1:-}
 vardir=$HOME/.local/var
 datadir=$vardir/mysql
 rundir=$vardir/run
 redisdir=$vardir/redis
+miniodir=$vardir/minio
 errorlog=$vardir/mysql-error.log
+miniolog=$vardir/minio.log
 
-mkdir -p $rundir $redisdir
+mkdir -p $rundir $redisdir $miniodir
 
 function mysql_is_running()
 {
@@ -35,6 +38,11 @@ function mysql_is_running()
 function redis_is_running()
 {
     redis-cli -h 127.0.0.1 -p 6379 ping > /dev/null 2>&1
+}
+
+function minio_is_running()
+{
+    curl -sf http://127.0.0.1:9000/minio/health/live > /dev/null 2>&1
 }
 
 if mysql_is_running; then
@@ -80,8 +88,30 @@ else
         --daemonize yes
 fi
 
-if test -n "$database"; then
-    mysql --no-defaults --socket=$rundir/mysqld.sock -u root -e "CREATE DATABASE IF NOT EXISTS \`$database\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+if minio_is_running; then
+    echo MinIO is already running
+else
+    echo Starting MinIO...
+    MINIO_ROOT_USER=minioadmin MINIO_ROOT_PASSWORD=minioadmin \
+        nohup minio server $miniodir \
+            --address 127.0.0.1:9000 \
+            --console-address 127.0.0.1:9001 \
+            > $miniolog 2>&1 &
+
+    echo Waiting for MinIO...
+    for i in `seq 30`; do
+        if minio_is_running; then
+            break
+        fi
+        sleep 1
+    done
+fi
+
+mc --quiet alias set local http://127.0.0.1:9000 minioadmin minioadmin > /dev/null
+
+if test -n "$name"; then
+    mysql --no-defaults --socket=$rundir/mysqld.sock -u root -e "CREATE DATABASE IF NOT EXISTS \`$name\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+    mc --quiet mb --ignore-existing local/$name
 fi
 
 echo
@@ -91,4 +121,5 @@ redis-cli ping
 echo
 echo "MySQL  127.0.0.1:3306  socket=$rundir/mysqld.sock  user=root  password="
 echo "Redis  127.0.0.1:6379"
+echo "MinIO  127.0.0.1:9000  console=127.0.0.1:9001  key=minioadmin  secret=minioadmin"
 echo
