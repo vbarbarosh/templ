@@ -65,27 +65,6 @@ RUN echo Installing Playwright browsers... \
 RUN echo Installing Puppeteer browsers... \
     && puppeteer browsers install
 
-# Remote ADD contents participate in Docker's cache key, so a new npm `latest`
-# version invalidates the Claude layer without rebuilding the browser layers.
-ADD --chown=ubuntu:ubuntu https://registry.npmjs.org/@anthropic-ai%2Fclaude-code/latest /tmp/claude-package.json
-
-RUN CLAUDE_VERSION="$(jq -r .version /tmp/claude-package.json)" \
-    && echo "Installing Claude ${CLAUDE_VERSION}..." \
-    && curl -fsSL https://claude.ai/install.sh | bash -s "${CLAUDE_VERSION}" \
-    && "$HOME/.local/bin/claude" --version \
-    && rm /tmp/claude-package.json
-
-# Remote ADD contents participate in Docker's cache key, so a new npm `latest`
-# version invalidates the Codex layer without rebuilding the browser layers.
-ADD --chown=ubuntu:ubuntu https://registry.npmjs.org/@openai%2Fcodex/latest /tmp/codex-package.json
-
-RUN CODEX_VERSION="$(jq -r .version /tmp/codex-package.json)" \
-    && echo "Installing Codex ${CODEX_VERSION}..." \
-    && npm install --global "@openai/codex@${CODEX_VERSION}" \
-    && codex --version \
-    && rm /tmp/codex-package.json \
-    && mkdir -p "$HOME/.codex"
-
 USER root
 
 # A PHP application can then run entirely inside this container, with no access
@@ -155,5 +134,28 @@ RUN echo Configuring bash... \
     && echo >> $HOME/.bashrc \
     && echo >> $HOME/.bashrc 'alias codex="codex -a never -s danger-full-access"' \
     && echo >> $HOME/.bashrc 'export PATH="$HOME/.local/bin:$PATH"'
+
+# Remote ADD contents participate in Docker's cache key, so a new npm `latest`
+# version invalidates the Claude layer. The CLI layers stay last in the file so
+# a release rebuilds nothing else.
+ADD --chown=ubuntu:ubuntu https://registry.npmjs.org/@anthropic-ai%2Fclaude-code/latest /tmp/claude-package.json
+
+RUN CLAUDE_VERSION="$(jq -r .version /tmp/claude-package.json)" \
+    && echo "Installing Claude ${CLAUDE_VERSION}..." \
+    && curl -fsSL https://claude.ai/install.sh | bash -s "${CLAUDE_VERSION}" \
+    && "$HOME/.local/bin/claude" --version \
+    && rm /tmp/claude-package.json
+
+# Remote ADD contents participate in Docker's cache key, so a new npm `latest`
+# version invalidates the Codex layer. The CLI layers stay last in the file so
+# a release rebuilds nothing else.
+ADD --chown=ubuntu:ubuntu https://registry.npmjs.org/@openai%2Fcodex/latest /tmp/codex-package.json
+
+RUN CODEX_VERSION="$(jq -r .version /tmp/codex-package.json)" \
+    && echo "Installing Codex ${CODEX_VERSION}..." \
+    && npm install --global "@openai/codex@${CODEX_VERSION}" \
+    && codex --version \
+    && rm /tmp/codex-package.json \
+    && mkdir -p "$HOME/.codex"
 
 WORKDIR /app
