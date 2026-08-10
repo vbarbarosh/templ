@@ -124,6 +124,20 @@ RUN echo Installing MinIO... \
     && minio --version \
     && mc --version
 
+# Image-processing, OCR and QR toolchain (receipts pipeline and friends):
+# OpenCV + numpy for contour/dewarp work, tesseract with Romanian for OCR,
+# zbar for one-line QR decoding, pip for Python tools like rembg.
+RUN echo Installing image processing and OCR tools... \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        python3-pip \
+        tesseract-ocr \
+        tesseract-ocr-ron \
+        zbar-tools \
+    && tesseract --version \
+    && zbarimg --version \
+    && rm -rf /var/lib/apt/lists/*
+
 # Starts all three as the container user, listening on 127.0.0.1 only
 COPY files/bin/services /usr/local/bin/services
 RUN chmod 0755 /usr/local/bin/services
@@ -134,6 +148,49 @@ RUN echo Configuring bash... \
     && echo >> $HOME/.bashrc \
     && echo >> $HOME/.bashrc 'alias codex="codex -a never -s danger-full-access"' \
     && echo >> $HOME/.bashrc 'export PATH="$HOME/.local/bin:$PATH"'
+
+# OpenCV comes from pip, not apt: rembg's dependencies force numpy 2 into
+# ~/.local, which shadows apt numpy and breaks noble's numpy-1-built
+# python3-opencv. rembg extras: [cpu] is the onnxruntime backend (without it
+# only the bare library installs), [cli] is the rembg command. The model
+# download (~170MB to ~/.u2net) happens at build time so background removal
+# works offline at runtime.
+RUN echo Installing Python imaging stack with rembg... \
+    && python3 -m pip install --user --break-system-packages \
+        opencv-python-headless \
+        "rembg[cpu,cli]" \
+    && python3 -c "from rembg import new_session; new_session()" \
+    && python3 -c "import cv2, numpy; print('OpenCV', cv2.__version__, '/ numpy', numpy.__version__)" \
+    && rembg --help > /dev/null
+
+# QR + OCR libraries for ad-hoc node scripts (NODE_PATH points here)
+RUN echo Installing node QR/OCR libraries... \
+    && npm install --global \
+        @zxing/library \
+        jsqr \
+        tesseract.js \
+    && node -e "require('jsqr'); require('@zxing/library'); console.log('jsqr + zxing ok')"
+
+# Chromium resolves fonts through fontconfig, so what is installed here decides
+# what screenshots and layout measurements show. Inter is the BannerNow editor's
+# UI font, and noto-core makes the generic sans-serif alias resolve the way a
+# desktop Ubuntu does (60-latin.conf prefers Noto Sans over DejaVu Sans), so a
+# page falls back to the same face a user sees.
+USER root
+
+RUN echo Installing UI fonts... \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        fonts-inter \
+        fonts-lato \
+        fonts-noto-core \
+        fonts-ubuntu \
+    && fc-cache -f \
+    && fc-match Inter | grep -qi inter \
+    && fc-match sans-serif | grep -qi noto \
+    && rm -rf /var/lib/apt/lists/*
+
+USER ubuntu
 
 # Remote ADD contents participate in Docker's cache key, so a new npm `latest`
 # version invalidates the Claude layer. The CLI layers stay last in the file so
