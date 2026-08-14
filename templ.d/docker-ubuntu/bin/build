@@ -10,4 +10,4 @@ scriptname=`basename $script`
 
 cd $scriptdir/..
 
-docker build . -t a -t ubuntu-claude
+docker build --pull . -t a -t ubuntu-claude

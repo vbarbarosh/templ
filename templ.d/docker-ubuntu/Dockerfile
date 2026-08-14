@@ -1,94 +1,104 @@
-FROM ubuntu:24.04
+# syntax=docker/dockerfile:1
 
-ENV DEBIAN_FRONTEND=noninteractive
+FROM scratch AS refresh-ubuntu
 
-RUN echo Installing basic tools... \
+# Remote ADD sources are checked by BuildKit during every build. Independent
+# refresh stages let these checks run in parallel and keep their metadata out
+# of the final image.
+ADD https://archive.ubuntu.com/ubuntu/dists/noble-updates/InRelease /ubuntu/noble-updates
+ADD https://security.ubuntu.com/ubuntu/dists/noble-security/InRelease /ubuntu/noble-security
+
+FROM scratch AS refresh-redis
+
+ADD https://pecl.php.net/rest/r/redis/latest.txt /redis/version
+
+FROM scratch AS refresh-composer
+
+ADD https://getcomposer.org/versions /composer/versions.json
+
+FROM scratch AS refresh-minio
+
+ADD https://dl.min.io/server/minio/release/linux-amd64/minio.sha256sum /minio/minio.sha256sum
+ADD https://dl.min.io/client/mc/release/linux-amd64/mc.sha256sum /minio/mc.sha256sum
+
+FROM scratch AS refresh-yt-dlp
+
+ADD https://github.com/yt-dlp/yt-dlp/releases/latest/download/SHA2-256SUMS /yt-dlp/SHA2-256SUMS
+
+FROM scratch AS refresh-chrome
+
+ADD https://dl.google.com/linux/chrome/deb/dists/stable/main/binary-amd64/Packages /chrome/Packages
+
+FROM ubuntu:24.04 AS refresh-python
+
+ADD https://pypi.org/pypi/opencv-python-headless/json /python/opencv.json
+ADD https://pypi.org/pypi/rembg/json /python/rembg.json
+RUN chmod 0444 /python/*.json
+
+FROM ubuntu:24.04 AS refresh-node
+
+ADD https://registry.npmjs.org/@zxing%2Flibrary/latest /node/zxing.json
+ADD https://registry.npmjs.org/jsqr/latest /node/jsqr.json
+ADD https://registry.npmjs.org/tesseract.js/latest /node/tesseract.json
+RUN chmod 0444 /node/*.json
+
+FROM ubuntu:24.04 AS refresh-claude
+
+ADD https://registry.npmjs.org/@anthropic-ai%2Fclaude-code/latest /claude/package.json
+RUN chmod 0444 /claude/package.json
+
+FROM ubuntu:24.04 AS refresh-codex
+
+ADD https://registry.npmjs.org/@openai%2Fcodex/latest /codex/package.json
+RUN chmod 0444 /codex/package.json
+
+FROM ubuntu:24.04 AS runtime
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG NODE_VERSION=24.14.1
+ARG PLAYWRIGHT_VERSION=1.61.1
+ARG PUPPETEER_VERSION=25.3.0
+ARG CYPRESS_VERSION=14.2.1
+
+ENV NPM_CONFIG_PREFIX=/home/ubuntu/.local \
+    NODE_PATH=/home/ubuntu/.local/lib/node_modules \
+    PATH=/home/ubuntu/.local/bin:${PATH} \
+    PLAYWRIGHT_BROWSERS_PATH=/home/ubuntu/.cache/ms-playwright \
+    PUPPETEER_CACHE_DIR=/home/ubuntu/.cache/puppeteer \
+    CYPRESS_CACHE_FOLDER=/home/ubuntu/.cache/Cypress
+
+# Keep distribution packages in one layer. This avoids repeated apt index
+# downloads and prevents package archives and indexes entering the final image.
+RUN --mount=type=bind,from=refresh-ubuntu,source=/ubuntu,target=/tmp/refresh \
+    --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    mv /etc/apt/apt.conf.d/docker-clean /tmp/docker-clean \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
-        file \
-        zip unzip \
-        wget curl vim \
-        htop \
-        man \
-        g++ \
-        make \
-        jq \
+        curl \
         ethtool \
-        net-tools \
-        pciutils \
-        parallel \
-        pv \
-        ripgrep \
-        silversearcher-ag \
-        tree \
-        git \
-        yt-dlp \
         ffmpeg \
+        file \
+        fonts-inter \
+        fonts-lato \
+        fonts-noto-core \
+        fonts-ubuntu \
+        g++ \
+        git \
+        htop \
         imagemagick \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN echo Installing Node.js 24.14.1 \
-    && curl -fsSL "https://nodejs.org/dist/v24.14.1/node-v24.14.1-linux-x64.tar.xz" -o /tmp/node.tar.xz \
-    && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 \
-    && rm /tmp/node.tar.xz \
-    && node --version \
-    && npm --version
-
-ENV NPM_CONFIG_PREFIX="/home/ubuntu/.local"
-ENV NODE_PATH="/home/ubuntu/.local/lib/node_modules"
-ENV PATH="/home/ubuntu/.local/bin:${PATH}"
-ENV PLAYWRIGHT_BROWSERS_PATH="/home/ubuntu/.cache/ms-playwright"
-ENV PUPPETEER_CACHE_DIR="/home/ubuntu/.cache/puppeteer"
-ENV CYPRESS_CACHE_FOLDER="/home/ubuntu/.cache/Cypress"
-
-USER ubuntu
-
-RUN echo Installing Playwright 1.61.1, Puppeteer 25.3.0, and Cypress 14.2.1... \
-    && PUPPETEER_SKIP_DOWNLOAD=true npm install --global \
-        playwright@1.61.1 \
-        puppeteer@25.3.0 \
-        cypress@14.2.1 \
-    && playwright --version \
-    && node -e "console.log('Puppeteer ' + require('puppeteer/package.json').version)" \
-    && cypress version
-
-USER root
-
-RUN echo Installing browser system dependencies... \
-    && playwright install-deps \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN echo Installing Google Chrome... \
-    && apt-get update \
-    && curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /tmp/google-chrome.deb \
-    && apt-get install -y --no-install-recommends /tmp/google-chrome.deb \
-    && rm /tmp/google-chrome.deb \
-    && google-chrome --version \
-    && rm -rf /var/lib/apt/lists/*
-
-USER ubuntu
-
-RUN echo Installing Playwright browsers... \
-    && playwright install chromium firefox webkit \
-    && playwright install --list
-
-RUN echo Installing Puppeteer browsers... \
-    && puppeteer browsers install
-
-RUN echo Verifying Cypress... \
-    && cypress verify \
-    && cypress info
-
-USER root
-
-# A PHP application can then run entirely inside this container, with no access
-# to anything on the host.
-RUN echo Installing PHP and extensions... \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        php-cli \
+        iproute2 \
+        jq \
+        make \
+        man \
+        mysql-client \
+        mysql-server \
+        net-tools \
+        parallel \
+        pciutils \
         php-bcmath \
+        php-cli \
         php-curl \
         php-dev \
         php-gd \
@@ -101,141 +111,182 @@ RUN echo Installing PHP and extensions... \
         php-soap \
         php-xml \
         php-zip \
-    && php --version \
-    && php -m \
-    && rm -rf /var/lib/apt/lists/*
-
-# Ubuntu ships phpredis 5.3.7, which throws "Redis server went away" when
-# Redis::setOption() is called before connect(). Applications that set options
-# on a fresh client need 6.x, so build it from PECL rather than apt.
-RUN echo Installing phpredis from PECL... \
-    && yes '' | pecl install redis \
-    && php_version=`php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;'` \
-    && echo extension=redis.so > /etc/php/$php_version/mods-available/redis.ini \
-    && phpenmod redis \
-    && php -r 'exit(extension_loaded("redis") ? 0 : 1);' \
-    && php -r 'echo "phpredis ", phpversion("redis"), PHP_EOL;'
-
-RUN echo Installing Composer... \
-    && curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php \
-    && php /tmp/composer-setup.php --install-dir=/usr/local/bin --filename=composer \
-    && rm /tmp/composer-setup.php \
-    && composer --version
-
-# Ubuntu 24.04 ships MySQL 8.0. Staying with the distribution package avoids
-# adding a third-party apt repository.
-RUN echo Installing MySQL and Redis... \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        mysql-server \
-        mysql-client \
-        redis-server \
-    && rm -rf /var/lib/apt/lists/*
-
-RUN echo Installing MinIO... \
-    && curl -fsSL https://dl.min.io/server/minio/release/linux-amd64/minio -o /usr/local/bin/minio \
-    && curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc \
-    && chmod 0755 /usr/local/bin/minio /usr/local/bin/mc \
-    && minio --version \
-    && mc --version
-
-# Image-processing, OCR and QR toolchain (receipts pipeline and friends):
-# OpenCV + numpy for contour/dewarp work, tesseract with Romanian for OCR,
-# zbar for one-line QR decoding, pip for Python tools like rembg.
-RUN echo Installing image processing and OCR tools... \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
+        pv \
         python3-pip \
+        redis-server \
+        ripgrep \
+        silversearcher-ag \
+        socat \
         tesseract-ocr \
         tesseract-ocr-ron \
+        tree \
+        unzip \
+        vim \
+        wget \
         zbar-tools \
+        zip \
+    && fc-cache -f \
+    && fc-match Inter | grep -qi inter \
+    && fc-match sans-serif | grep -qi noto \
+    && php --version \
     && tesseract --version \
     && zbarimg --version \
-    && rm -rf /var/lib/apt/lists/*
+    && mv /tmp/docker-clean /etc/apt/apt.conf.d/docker-clean
 
-# Starts all three as the container user, listening on 127.0.0.1 only
-COPY files/bin/services /usr/local/bin/services
-RUN chmod 0755 /usr/local/bin/services
+RUN curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" -o /tmp/node.tar.xz \
+    && tar -xJf /tmp/node.tar.xz -C /usr/local --strip-components=1 \
+    && rm /tmp/node.tar.xz \
+    && node --version \
+    && npm --version
 
 USER ubuntu
 
-RUN echo Configuring bash... \
-    && echo >> $HOME/.bashrc \
-    && echo >> $HOME/.bashrc 'alias codex="codex -a never -s danger-full-access"' \
-    && echo >> $HOME/.bashrc 'export PATH="$HOME/.local/bin:$PATH"'
+# npm's download cache is retained by BuildKit for later builds but is not
+# committed to the image. Browser downloads use their separate runtime caches.
+RUN --mount=type=cache,target=/home/ubuntu/.npm,uid=1000,gid=1000 \
+    PUPPETEER_SKIP_DOWNLOAD=true npm install --global --no-audit --no-fund \
+        "playwright@${PLAYWRIGHT_VERSION}" \
+        "puppeteer@${PUPPETEER_VERSION}" \
+        "cypress@${CYPRESS_VERSION}" \
+    && playwright --version \
+    && node -e "console.log('Puppeteer ' + require('puppeteer/package.json').version)" \
+    && cypress version
+
+USER root
+
+# Install the pinned browser framework's system dependencies before downloading
+# its pinned browser revisions. Chrome is intentionally installed much later so
+# a Chrome update does not invalidate these large, stable browser layers.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    mv /etc/apt/apt.conf.d/docker-clean /tmp/docker-clean \
+    && playwright install-deps \
+    && mv /tmp/docker-clean /etc/apt/apt.conf.d/docker-clean
+
+USER ubuntu
+
+RUN playwright install chromium firefox webkit \
+    && playwright install --list
+
+RUN puppeteer browsers install
+
+RUN cypress verify \
+    && cypress info
+
+RUN printf '\n%s\n%s\n' \
+        'alias codex="codex -a never -s danger-full-access"' \
+        'export PATH="$HOME/.local/bin:$PATH"' \
+        >> "$HOME/.bashrc"
 
 # OpenCV comes from pip, not apt: rembg's dependencies force numpy 2 into
 # ~/.local, which shadows apt numpy and breaks noble's numpy-1-built
-# python3-opencv. rembg extras: [cpu] is the onnxruntime backend (without it
-# only the bare library installs), [cli] is the rembg command. The model
-# download (~170MB to ~/.u2net) happens at build time so background removal
-# works offline at runtime.
-RUN echo Installing Python imaging stack with rembg... \
+# python3-opencv. The model download (~170 MB to ~/.u2net) happens at build time
+# so background removal works offline at runtime.
+RUN --mount=type=bind,from=refresh-python,source=/python,target=/tmp/refresh \
+    --mount=type=cache,target=/home/ubuntu/.cache/pip,uid=1000,gid=1000 \
+    opencv_version="$(jq -r .info.version /tmp/refresh/opencv.json)" \
+    && rembg_version="$(jq -r .info.version /tmp/refresh/rembg.json)" \
     && python3 -m pip install --user --break-system-packages \
-        opencv-python-headless \
-        "rembg[cpu,cli]" \
+        "opencv-python-headless==${opencv_version}" \
+        "rembg[cpu,cli]==${rembg_version}" \
     && python3 -c "from rembg import new_session; new_session()" \
     && python3 -c "import cv2, numpy; print('OpenCV', cv2.__version__, '/ numpy', numpy.__version__)" \
     && rembg --help > /dev/null
 
-# QR + OCR libraries for ad-hoc node scripts (NODE_PATH points here)
-RUN echo Installing node QR/OCR libraries... \
-    && npm install --global \
-        @zxing/library \
-        jsqr \
-        tesseract.js \
+# QR + OCR libraries for ad-hoc node scripts (NODE_PATH points here).
+RUN --mount=type=bind,from=refresh-node,source=/node,target=/tmp/refresh \
+    --mount=type=cache,target=/home/ubuntu/.npm,uid=1000,gid=1000 \
+    zxing_version="$(jq -r .version /tmp/refresh/zxing.json)" \
+    && jsqr_version="$(jq -r .version /tmp/refresh/jsqr.json)" \
+    && tesseract_version="$(jq -r .version /tmp/refresh/tesseract.json)" \
+    && npm install --global --no-audit --no-fund \
+        "@zxing/library@${zxing_version}" \
+        "jsqr@${jsqr_version}" \
+        "tesseract.js@${tesseract_version}" \
     && node -e "require('jsqr'); require('@zxing/library'); console.log('jsqr + zxing ok')"
 
-# Chromium resolves fonts through fontconfig, so what is installed here decides
-# what screenshots and layout measurements show. Inter is the BannerNow editor's
-# UI font, and noto-core makes the generic sans-serif alias resolve the way a
-# desktop Ubuntu does (60-latin.conf prefers Noto Sans over DejaVu Sans), so a
-# page falls back to the same face a user sees.
 USER root
 
-RUN echo Installing UI fonts... \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        fonts-inter \
-        fonts-lato \
-        fonts-noto-core \
-        fonts-ubuntu \
-    && fc-cache -f \
-    && fc-match Inter | grep -qi inter \
-    && fc-match sans-serif | grep -qi noto \
-    && rm -rf /var/lib/apt/lists/*
+# Ubuntu ships phpredis 5.3.7, which throws "Redis server went away" when
+# Redis::setOption() is called before connect(). Applications that set options
+# on a fresh client need 6.x, so build the current PECL release.
+RUN --mount=type=bind,from=refresh-redis,source=/redis,target=/tmp/refresh \
+    redis_version="$(tr -d '[:space:]' < /tmp/refresh/version)" \
+    && yes '' | pecl install "redis-${redis_version}" \
+    && php_version="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')" \
+    && echo extension=redis.so > "/etc/php/${php_version}/mods-available/redis.ini" \
+    && phpenmod redis \
+    && php -r 'exit(extension_loaded("redis") ? 0 : 1);' \
+    && php -r 'echo "phpredis ", phpversion("redis"), PHP_EOL;' \
+    && rm -rf /tmp/pear
 
+RUN --mount=type=bind,from=refresh-composer,source=/composer,target=/tmp/refresh \
+    composer_version="$(jq -r '.stable[0].version' /tmp/refresh/versions.json)" \
+    && curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php \
+    && php /tmp/composer-setup.php \
+        --version="${composer_version}" \
+        --install-dir=/usr/local/bin \
+        --filename=composer \
+    && rm /tmp/composer-setup.php \
+    && composer --version
 
-RUN echo Installing socat... \
+RUN --mount=type=bind,from=refresh-minio,source=/minio,target=/tmp/refresh \
+    curl -fsSL https://dl.min.io/server/minio/release/linux-amd64/minio -o /usr/local/bin/minio \
+    && curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc \
+    && echo "$(cut -d ' ' -f 1 /tmp/refresh/minio.sha256sum)  /usr/local/bin/minio" | sha256sum -c - \
+    && echo "$(cut -d ' ' -f 1 /tmp/refresh/mc.sha256sum)  /usr/local/bin/mc" | sha256sum -c - \
+    && chmod 0755 /usr/local/bin/minio /usr/local/bin/mc \
+    && minio --version \
+    && mc --version
+
+RUN --mount=type=bind,from=refresh-yt-dlp,source=/yt-dlp,target=/tmp/refresh \
+    curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
+    && (cd /usr/local/bin && grep '  yt-dlp$' /tmp/refresh/SHA2-256SUMS | sha256sum -c -) \
+    && chmod 0755 /usr/local/bin/yt-dlp \
+    && yt-dlp --version
+
+# Chrome is the most frequently changing large system package, so keep it near
+# the end. Its repository metadata both invalidates the layer and supplies the
+# exact version used to verify the downloaded package.
+RUN --mount=type=bind,from=refresh-chrome,source=/chrome,target=/tmp/refresh \
+    --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    chrome_version="$(awk '/^Package: google-chrome-stable$/ { stable=1 } stable && /^Version:/ { print $2; exit }' /tmp/refresh/Packages)" \
+    && chrome_filename="$(awk '/^Package: google-chrome-stable$/ { stable=1 } stable && /^Filename:/ { print $2; exit }' /tmp/refresh/Packages)" \
+    && chrome_sha256="$(awk '/^Package: google-chrome-stable$/ { stable=1 } stable && /^SHA256:/ { print $2; exit }' /tmp/refresh/Packages)" \
+    && test -n "${chrome_version}" \
+    && test -n "${chrome_filename}" \
+    && test -n "${chrome_sha256}" \
+    && mv /etc/apt/apt.conf.d/docker-clean /tmp/docker-clean \
     && apt-get update \
-    && apt-get install -y --no-install-recommends \
-        socat iproute2 \
-    && socat -V \
-    && ss --version
+    && curl -fsSL "https://dl.google.com/linux/chrome/deb/${chrome_filename}" -o /tmp/google-chrome.deb \
+    && echo "${chrome_sha256}  /tmp/google-chrome.deb" | sha256sum -c - \
+    && apt-get install -y --no-install-recommends /tmp/google-chrome.deb \
+    && test "$(dpkg-query -W -f='${Version}' google-chrome-stable)" = "${chrome_version}" \
+    && rm /tmp/google-chrome.deb \
+    && google-chrome --version \
+    && mv /tmp/docker-clean /etc/apt/apt.conf.d/docker-clean
 
 USER ubuntu
 
-# Remote ADD contents participate in Docker's cache key, so a new npm `latest`
-# version invalidates the Claude layer. The CLI layers stay last in the file so
-# a release rebuilds nothing else.
-ADD --chown=ubuntu:ubuntu https://registry.npmjs.org/@anthropic-ai%2Fclaude-code/latest /tmp/claude-package.json
-
-RUN CLAUDE_VERSION="$(jq -r .version /tmp/claude-package.json)" \
+# Remote metadata participates in Docker's cache key, so new CLI releases
+# invalidate these inexpensive layers at the end of the file.
+RUN --mount=type=bind,from=refresh-claude,source=/claude,target=/tmp/refresh \
+    CLAUDE_VERSION="$(jq -r .version /tmp/refresh/package.json)" \
     && echo "Installing Claude ${CLAUDE_VERSION}..." \
     && curl -fsSL https://claude.ai/install.sh | bash -s "${CLAUDE_VERSION}" \
-    && "$HOME/.local/bin/claude" --version \
-    && rm /tmp/claude-package.json
+    && "$HOME/.local/bin/claude" --version
 
-# Remote ADD contents participate in Docker's cache key, so a new npm `latest`
-# version invalidates the Codex layer. The CLI layers stay last in the file so
-# a release rebuilds nothing else.
-ADD --chown=ubuntu:ubuntu https://registry.npmjs.org/@openai%2Fcodex/latest /tmp/codex-package.json
-
-RUN CODEX_VERSION="$(jq -r .version /tmp/codex-package.json)" \
+RUN --mount=type=bind,from=refresh-codex,source=/codex,target=/tmp/refresh \
+    --mount=type=cache,target=/home/ubuntu/.npm,uid=1000,gid=1000 \
+    CODEX_VERSION="$(jq -r .version /tmp/refresh/package.json)" \
     && echo "Installing Codex ${CODEX_VERSION}..." \
-    && npm install --global "@openai/codex@${CODEX_VERSION}" \
+    && npm install --global --no-audit --no-fund "@openai/codex@${CODEX_VERSION}" \
     && codex --version \
-    && rm /tmp/codex-package.json \
     && mkdir -p "$HOME/.codex"
+
+# COPY defaults to root ownership even though the current runtime user is
+# ubuntu. Keeping local content last prevents edits from invalidating downloads.
+COPY --chown=0:0 --chmod=0755 files/bin/services /usr/local/bin/services
 
 WORKDIR /app
