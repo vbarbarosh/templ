@@ -40,20 +40,31 @@ ENV NODE_PATH="/home/ubuntu/.local/lib/node_modules"
 ENV PATH="/home/ubuntu/.local/bin:${PATH}"
 ENV PLAYWRIGHT_BROWSERS_PATH="/home/ubuntu/.cache/ms-playwright"
 ENV PUPPETEER_CACHE_DIR="/home/ubuntu/.cache/puppeteer"
+ENV CYPRESS_CACHE_FOLDER="/home/ubuntu/.cache/Cypress"
 
 USER ubuntu
 
-RUN echo Installing Playwright 1.61.1 and Puppeteer 25.3.0... \
+RUN echo Installing Playwright 1.61.1, Puppeteer 25.3.0, and Cypress 14.2.1... \
     && PUPPETEER_SKIP_DOWNLOAD=true npm install --global \
         playwright@1.61.1 \
         puppeteer@25.3.0 \
+        cypress@14.2.1 \
     && playwright --version \
-    && node -e "console.log('Puppeteer ' + require('puppeteer/package.json').version)"
+    && node -e "console.log('Puppeteer ' + require('puppeteer/package.json').version)" \
+    && cypress version
 
 USER root
 
 RUN echo Installing browser system dependencies... \
     && playwright install-deps \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN echo Installing Google Chrome... \
+    && apt-get update \
+    && curl -fsSL https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb -o /tmp/google-chrome.deb \
+    && apt-get install -y --no-install-recommends /tmp/google-chrome.deb \
+    && rm /tmp/google-chrome.deb \
+    && google-chrome --version \
     && rm -rf /var/lib/apt/lists/*
 
 USER ubuntu
@@ -64,6 +75,10 @@ RUN echo Installing Playwright browsers... \
 
 RUN echo Installing Puppeteer browsers... \
     && puppeteer browsers install
+
+RUN echo Verifying Cypress... \
+    && cypress verify \
+    && cypress info
 
 USER root
 
@@ -189,6 +204,14 @@ RUN echo Installing UI fonts... \
     && fc-match Inter | grep -qi inter \
     && fc-match sans-serif | grep -qi noto \
     && rm -rf /var/lib/apt/lists/*
+
+
+RUN echo Installing socat... \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        socat iproute2 \
+    && socat -V \
+    && ss --version
 
 USER ubuntu
 
