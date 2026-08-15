@@ -33,12 +33,14 @@ FROM ubuntu:24.04 AS refresh-python
 
 ADD https://pypi.org/pypi/opencv-python-headless/json /python/opencv.json
 ADD https://pypi.org/pypi/rembg/json /python/rembg.json
+ADD https://pypi.org/pypi/faster-whisper/json /python/faster-whisper.json
 RUN chmod 0444 /python/*.json
 
 FROM ubuntu:24.04 AS refresh-node
 
 ADD https://registry.npmjs.org/@zxing%2Flibrary/latest /node/zxing.json
 ADD https://registry.npmjs.org/jsqr/latest /node/jsqr.json
+ADD https://registry.npmjs.org/msedge-tts/latest /node/msedge-tts.json
 ADD https://registry.npmjs.org/tesseract.js/latest /node/tesseract.json
 RUN chmod 0444 /node/*.json
 
@@ -59,13 +61,16 @@ ARG NODE_VERSION=24.14.1
 ARG PLAYWRIGHT_VERSION=1.61.1
 ARG PUPPETEER_VERSION=25.3.0
 ARG CYPRESS_VERSION=14.2.1
+ARG WHISPER_MODEL=small
 
 ENV NPM_CONFIG_PREFIX=/home/ubuntu/.local \
     NODE_PATH=/home/ubuntu/.local/lib/node_modules \
     PATH=/home/ubuntu/.local/bin:${PATH} \
     PLAYWRIGHT_BROWSERS_PATH=/home/ubuntu/.cache/ms-playwright \
     PUPPETEER_CACHE_DIR=/home/ubuntu/.cache/puppeteer \
-    CYPRESS_CACHE_FOLDER=/home/ubuntu/.cache/Cypress
+    CYPRESS_CACHE_FOLDER=/home/ubuntu/.cache/Cypress \
+    HF_HOME=/home/ubuntu/.cache/huggingface \
+    WHISPER_MODEL=${WHISPER_MODEL}
 
 # Keep distribution packages in one layer. This avoids repeated apt index
 # downloads and prevents package archives and indexes entering the final image.
@@ -82,6 +87,7 @@ RUN --mount=type=bind,from=refresh-ubuntu,source=/ubuntu,target=/tmp/refresh \
         file \
         fonts-inter \
         fonts-lato \
+        fonts-noto-color-emoji \
         fonts-noto-core \
         fonts-ubuntu \
         g++ \
@@ -193,17 +199,35 @@ RUN --mount=type=bind,from=refresh-python,source=/python,target=/tmp/refresh \
     && python3 -c "import cv2, numpy; print('OpenCV', cv2.__version__, '/ numpy', numpy.__version__)" \
     && rembg --help > /dev/null
 
-# QR + OCR libraries for ad-hoc node scripts (NODE_PATH points here).
+# QR, OCR, and speech-synthesis libraries for ad-hoc node scripts (NODE_PATH
+# points here). msedge-tts speaks screencast narration through the Edge voices;
+# it needs network at runtime, and writes into a directory that must exist.
 RUN --mount=type=bind,from=refresh-node,source=/node,target=/tmp/refresh \
     --mount=type=cache,target=/home/ubuntu/.npm,uid=1000,gid=1000 \
     zxing_version="$(jq -r .version /tmp/refresh/zxing.json)" \
     && jsqr_version="$(jq -r .version /tmp/refresh/jsqr.json)" \
+    && msedge_tts_version="$(jq -r .version /tmp/refresh/msedge-tts.json)" \
     && tesseract_version="$(jq -r .version /tmp/refresh/tesseract.json)" \
     && npm install --global --no-audit --no-fund \
         "@zxing/library@${zxing_version}" \
         "jsqr@${jsqr_version}" \
+        "msedge-tts@${msedge_tts_version}" \
         "tesseract.js@${tesseract_version}" \
-    && node -e "require('jsqr'); require('@zxing/library'); console.log('jsqr + zxing ok')"
+    && node -e "require('jsqr'); require('@zxing/library'); require('msedge-tts'); console.log('jsqr + zxing + msedge-tts ok')"
+
+# Speech in a recording is unreadable without transcription: faster-whisper
+# turns an audio or video track into text. CTranslate2 runs it on the CPU
+# without torch, PyAV reads .mp4/.webm/.mkv directly, and the model (~464 MB
+# for small) is fetched at build time so transcription works offline. Build
+# with --build-arg WHISPER_MODEL=base for a smaller, less accurate one.
+RUN --mount=type=bind,from=refresh-python,source=/python,target=/tmp/refresh \
+    --mount=type=cache,target=/home/ubuntu/.cache/pip,uid=1000,gid=1000 \
+    faster_whisper_version="$(jq -r .info.version /tmp/refresh/faster-whisper.json)" \
+    && python3 -m pip install --user --break-system-packages \
+        "faster-whisper==${faster_whisper_version}" \
+    && ffmpeg -nostdin -v error -f lavfi -i sine=frequency=440:sample_rate=16000 -t 1 -y /tmp/probe.wav \
+    && python3 -c "from faster_whisper import WhisperModel; model = WhisperModel('${WHISPER_MODEL}', device='cpu', compute_type='int8'); segments, info = model.transcribe('/tmp/probe.wav'); list(segments); print('faster-whisper ${WHISPER_MODEL}', info.language)" \
+    && rm /tmp/probe.wav
 
 USER root
 
@@ -288,5 +312,9 @@ RUN --mount=type=bind,from=refresh-codex,source=/codex,target=/tmp/refresh \
 # COPY defaults to root ownership even though the current runtime user is
 # ubuntu. Keeping local content last prevents edits from invalidating downloads.
 COPY --chown=0:0 --chmod=0755 files/bin/services /usr/local/bin/services
+
+# Tools the assistant reaches for: `tts` speaks narration, `transcribe` reads it
+# back out of a recording.
+COPY --chown=0:0 --chmod=0755 files/bin.ai/ /usr/local/bin/
 
 WORKDIR /app
