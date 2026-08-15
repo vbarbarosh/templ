@@ -201,7 +201,10 @@ RUN --mount=type=bind,from=refresh-python,source=/python,target=/tmp/refresh \
 
 # QR, OCR, and speech-synthesis libraries for ad-hoc node scripts (NODE_PATH
 # points here). msedge-tts speaks screencast narration through the Edge voices;
-# it needs network at runtime, and writes into a directory that must exist.
+# it needs network at runtime, and writes into a directory that must exist. Its
+# published preinstall hook (`npx only-allow pnpm`) rejects every other package
+# manager, so it installs with scripts off; the package builds nothing at
+# install time.
 RUN --mount=type=bind,from=refresh-node,source=/node,target=/tmp/refresh \
     --mount=type=cache,target=/home/ubuntu/.npm,uid=1000,gid=1000 \
     zxing_version="$(jq -r .version /tmp/refresh/zxing.json)" \
@@ -211,8 +214,8 @@ RUN --mount=type=bind,from=refresh-node,source=/node,target=/tmp/refresh \
     && npm install --global --no-audit --no-fund \
         "@zxing/library@${zxing_version}" \
         "jsqr@${jsqr_version}" \
-        "msedge-tts@${msedge_tts_version}" \
         "tesseract.js@${tesseract_version}" \
+    && npm install --global --no-audit --no-fund --ignore-scripts "msedge-tts@${msedge_tts_version}" \
     && node -e "require('jsqr'); require('@zxing/library'); require('msedge-tts'); console.log('jsqr + zxing + msedge-tts ok')"
 
 # Speech in a recording is unreadable without transcription: faster-whisper
