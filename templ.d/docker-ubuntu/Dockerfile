@@ -1,13 +1,5 @@
 # syntax=docker/dockerfile:1
 
-FROM scratch AS refresh-ubuntu
-
-# Remote ADD sources are checked by BuildKit during every build. Independent
-# refresh stages let these checks run in parallel and keep their metadata out
-# of the final image.
-ADD https://archive.ubuntu.com/ubuntu/dists/noble-updates/InRelease /ubuntu/noble-updates
-ADD https://security.ubuntu.com/ubuntu/dists/noble-security/InRelease /ubuntu/noble-security
-
 FROM scratch AS refresh-redis
 
 ADD https://pecl.php.net/rest/r/redis/latest.txt /redis/version
@@ -57,10 +49,13 @@ RUN chmod 0444 /codex/package.json
 FROM ubuntu:24.04 AS runtime
 
 ARG DEBIAN_FRONTEND=noninteractive
+ARG UBUNTU_REFRESH=manual
 ARG NODE_VERSION=24.14.1
 ARG PLAYWRIGHT_VERSION=1.61.1
 ARG PUPPETEER_VERSION=25.3.0
 ARG CYPRESS_VERSION=14.2.1
+ARG IMAGEMAGICK_VERSION=7.1.2-29
+ARG OXIPNG_VERSION=10.2.0
 ARG WHISPER_MODEL=small
 
 ENV NPM_CONFIG_PREFIX=/home/ubuntu/.local \
@@ -72,12 +67,13 @@ ENV NPM_CONFIG_PREFIX=/home/ubuntu/.local \
     HF_HOME=/home/ubuntu/.cache/huggingface \
     WHISPER_MODEL=${WHISPER_MODEL}
 
-# Keep distribution packages in one layer. This avoids repeated apt index
-# downloads and prevents package archives and indexes entering the final image.
-RUN --mount=type=bind,from=refresh-ubuntu,source=/ubuntu,target=/tmp/refresh \
-    --mount=type=cache,target=/var/cache/apt,sharing=locked \
+# Keep distribution packages in one layer. UBUNTU_REFRESH controls when this
+# layer checks for package updates; bin/build advances it once per UTC week.
+# Package archives and indexes stay in BuildKit caches, not the final image.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
-    mv /etc/apt/apt.conf.d/docker-clean /tmp/docker-clean \
+    echo "Ubuntu package refresh: ${UBUNTU_REFRESH}" \
+    && mv /etc/apt/apt.conf.d/docker-clean /tmp/docker-clean \
     && apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -101,6 +97,7 @@ RUN --mount=type=bind,from=refresh-ubuntu,source=/ubuntu,target=/tmp/refresh \
         mysql-client \
         mysql-server \
         net-tools \
+        optipng \
         parallel \
         pciutils \
         php-bcmath \
@@ -117,6 +114,8 @@ RUN --mount=type=bind,from=refresh-ubuntu,source=/ubuntu,target=/tmp/refresh \
         php-soap \
         php-xml \
         php-zip \
+        pngcrush \
+        pngquant \
         pv \
         python3-pip \
         redis-server \
@@ -128,15 +127,22 @@ RUN --mount=type=bind,from=refresh-ubuntu,source=/ubuntu,target=/tmp/refresh \
         tree \
         unzip \
         vim \
+        webp \
         wget \
         zbar-tools \
         zip \
+        zopfli \
     && fc-cache -f \
     && fc-match Inter | grep -qi inter \
     && fc-match sans-serif | grep -qi noto \
     && php --version \
     && tesseract --version \
     && zbarimg --version \
+    && optipng --version \
+    && pngcrush -version \
+    && pngquant --version \
+    && cwebp -version \
+    && zopflipng -h > /dev/null \
     && mv /tmp/docker-clean /etc/apt/apt.conf.d/docker-clean
 
 RUN curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" -o /tmp/node.tar.xz \
@@ -271,6 +277,38 @@ RUN --mount=type=bind,from=refresh-yt-dlp,source=/yt-dlp,target=/tmp/refresh \
     && (cd /usr/local/bin && grep '  yt-dlp$' /tmp/refresh/SHA2-256SUMS | sha256sum -c -) \
     && chmod 0755 /usr/local/bin/yt-dlp \
     && yt-dlp --version
+
+# oxipng is absent from the Ubuntu archive, so it comes from the project's own
+# release. GitHub publishes each asset's digest next to the download, so the
+# tarball is verified without a checksum copied into this file.
+RUN oxipng_dir="oxipng-${OXIPNG_VERSION}-x86_64-unknown-linux-musl" \
+    && oxipng_digest="$(curl -fsSL "https://api.github.com/repos/oxipng/oxipng/releases/tags/v${OXIPNG_VERSION}" | jq -r --arg name "${oxipng_dir}.tar.gz" '.assets[] | select(.name == $name) | .digest // empty')" \
+    && test -n "${oxipng_digest}" \
+    && curl -fsSL "https://github.com/oxipng/oxipng/releases/download/v${OXIPNG_VERSION}/${oxipng_dir}.tar.gz" -o /tmp/oxipng.tar.gz \
+    && echo "${oxipng_digest#sha256:}  /tmp/oxipng.tar.gz" | sha256sum -c - \
+    && tar -xzf /tmp/oxipng.tar.gz -C /usr/local/bin --strip-components=1 "${oxipng_dir}/oxipng" \
+    && rm /tmp/oxipng.tar.gz \
+    && oxipng --version
+
+# Ubuntu 24.04 ships ImageMagick 6, which answers to `convert` and has no
+# `magick` command. The upstream AppImage puts ImageMagick 7 beside it: the
+# container has no FUSE, so the image is unpacked, and only `magick` reaches
+# PATH, leaving every ImageMagick 6 command in place. The probe conversion
+# proves the unpacked tree finds its own coders.
+RUN magick_asset="ImageMagick-${IMAGEMAGICK_VERSION}-gcc-x86_64.AppImage" \
+    && magick_digest="$(curl -fsSL "https://api.github.com/repos/ImageMagick/ImageMagick/releases/tags/${IMAGEMAGICK_VERSION}" | jq -r --arg name "${magick_asset}" '.assets[] | select(.name == $name) | .digest // empty')" \
+    && test -n "${magick_digest}" \
+    && curl -fsSL "https://github.com/ImageMagick/ImageMagick/releases/download/${IMAGEMAGICK_VERSION}/${magick_asset}" -o /tmp/magick.AppImage \
+    && echo "${magick_digest#sha256:}  /tmp/magick.AppImage" | sha256sum -c - \
+    && chmod 0755 /tmp/magick.AppImage \
+    && cd /opt \
+    && /tmp/magick.AppImage --appimage-extract > /dev/null \
+    && mv /opt/squashfs-root /opt/imagemagick \
+    && rm /tmp/magick.AppImage \
+    && ln -s /opt/imagemagick/AppRun /usr/local/bin/magick \
+    && magick -version \
+    && magick -size 8x8 gradient:red-blue /tmp/probe.webp \
+    && rm /tmp/probe.webp
 
 # Chrome is the most frequently changing large system package, so keep it near
 # the end. Its repository metadata both invalidates the layer and supplies the

@@ -10,4 +10,12 @@ scriptname=`basename $script`
 
 cd $scriptdir/..
 
-docker build --pull . -t a -t ubuntu-claude
+# Refresh Ubuntu packages at most once per UTC week while allowing repeat
+# builds to reuse the expensive runtime layer.
+ubuntu_refresh="$(date -u +%G-W%V)"
+
+docker build --pull \
+    --build-arg "UBUNTU_REFRESH=${ubuntu_refresh}" \
+    . \
+    -t a \
+    -t ubuntu-claude
