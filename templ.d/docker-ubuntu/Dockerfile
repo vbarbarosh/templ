@@ -332,6 +332,15 @@ RUN --mount=type=bind,from=refresh-chrome,source=/chrome,target=/tmp/refresh \
     && google-chrome --version \
     && mv /tmp/docker-clean /etc/apt/apt.conf.d/docker-clean
 
+# Times shown by the shell, by build tools, and by recorded output are the local
+# times of the people reading them. tzdata arrives with the packages above, so
+# only the machine-wide selection is left to make.
+ENV TZ=Europe/Chisinau
+
+RUN ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
+    && echo "${TZ}" > /etc/timezone \
+    && date
+
 USER ubuntu
 
 # Remote metadata participates in Docker's cache key, so new CLI releases
