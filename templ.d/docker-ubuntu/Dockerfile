@@ -1,41 +1,7 @@
 # syntax=docker/dockerfile:1
 
-FROM scratch AS refresh-redis
-
-ADD https://pecl.php.net/rest/r/redis/latest.txt /redis/version
-
-FROM scratch AS refresh-composer
-
-ADD https://getcomposer.org/versions /composer/versions.json
-
-FROM scratch AS refresh-minio
-
-ADD https://dl.min.io/server/minio/release/linux-amd64/minio.sha256sum /minio/minio.sha256sum
-ADD https://dl.min.io/client/mc/release/linux-amd64/mc.sha256sum /minio/mc.sha256sum
-
-FROM scratch AS refresh-yt-dlp
-
-ADD https://github.com/yt-dlp/yt-dlp/releases/latest/download/SHA2-256SUMS /yt-dlp/SHA2-256SUMS
-
-FROM scratch AS refresh-chrome
-
-ADD https://dl.google.com/linux/chrome/deb/dists/stable/main/binary-amd64/Packages /chrome/Packages
-
-FROM ubuntu:24.04 AS refresh-python
-
-ADD https://pypi.org/pypi/opencv-python-headless/json /python/opencv.json
-ADD https://pypi.org/pypi/rembg/json /python/rembg.json
-ADD https://pypi.org/pypi/faster-whisper/json /python/faster-whisper.json
-RUN chmod 0444 /python/*.json
-
-FROM ubuntu:24.04 AS refresh-node
-
-ADD https://registry.npmjs.org/@zxing%2Flibrary/latest /node/zxing.json
-ADD https://registry.npmjs.org/jsqr/latest /node/jsqr.json
-ADD https://registry.npmjs.org/msedge-tts/latest /node/msedge-tts.json
-ADD https://registry.npmjs.org/tesseract.js/latest /node/tesseract.json
-RUN chmod 0444 /node/*.json
-
+# npm's metadata for the two CLIs. Each stage carries one release number, and
+# it is the cache key of the matching every-build layer at the end of the file.
 FROM ubuntu:24.04 AS refresh-claude
 
 ADD https://registry.npmjs.org/@anthropic-ai%2Fclaude-code/latest /claude/package.json
@@ -45,6 +11,15 @@ FROM ubuntu:24.04 AS refresh-codex
 
 ADD https://registry.npmjs.org/@openai%2Fcodex/latest /codex/package.json
 RUN chmod 0444 /codex/package.json
+
+# =============================================================================
+# Weekly layers
+#
+# UBUNTU_REFRESH carries one ISO week. It gates the package layer below, and
+# every layer under that one inherits the gate. Each layer here asks its own
+# upstream for the current version from inside the layer, so a release that
+# appears mid-week rebuilds nothing until the token advances.
+# =============================================================================
 
 FROM ubuntu:24.04 AS runtime
 
@@ -67,8 +42,8 @@ ENV NPM_CONFIG_PREFIX=/home/ubuntu/.local \
     HF_HOME=/home/ubuntu/.cache/huggingface \
     WHISPER_MODEL=${WHISPER_MODEL}
 
-# Keep distribution packages in one layer. UBUNTU_REFRESH controls when this
-# layer checks for package updates; bin/build advances it once per UTC week.
+# Keep distribution packages in one layer. UBUNTU_REFRESH is the only thing
+# that expires it, and bin/build advances the token once per UTC week.
 # Package archives and indexes stay in BuildKit caches, not the final image.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
@@ -167,8 +142,7 @@ RUN --mount=type=cache,target=/home/ubuntu/.npm,uid=1000,gid=1000 \
 USER root
 
 # Install the pinned browser framework's system dependencies before downloading
-# its pinned browser revisions. Chrome is intentionally installed much later so
-# a Chrome update does not invalidate these large, stable browser layers.
+# its pinned browser revisions.
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
     mv /etc/apt/apt.conf.d/docker-clean /tmp/docker-clean \
@@ -194,10 +168,9 @@ RUN printf '\n%s\n%s\n' \
 # ~/.local, which shadows apt numpy and breaks noble's numpy-1-built
 # python3-opencv. The model download (~170 MB to ~/.u2net) happens at build time
 # so background removal works offline at runtime.
-RUN --mount=type=bind,from=refresh-python,source=/python,target=/tmp/refresh \
-    --mount=type=cache,target=/home/ubuntu/.cache/pip,uid=1000,gid=1000 \
-    opencv_version="$(jq -r .info.version /tmp/refresh/opencv.json)" \
-    && rembg_version="$(jq -r .info.version /tmp/refresh/rembg.json)" \
+RUN --mount=type=cache,target=/home/ubuntu/.cache/pip,uid=1000,gid=1000 \
+    opencv_version="$(curl -fsSL https://pypi.org/pypi/opencv-python-headless/json | jq -r .info.version)" \
+    && rembg_version="$(curl -fsSL https://pypi.org/pypi/rembg/json | jq -r .info.version)" \
     && python3 -m pip install --user --break-system-packages \
         "opencv-python-headless==${opencv_version}" \
         "rembg[cpu,cli]==${rembg_version}" \
@@ -211,12 +184,11 @@ RUN --mount=type=bind,from=refresh-python,source=/python,target=/tmp/refresh \
 # published preinstall hook (`npx only-allow pnpm`) rejects every other package
 # manager, so it installs with scripts off; the package builds nothing at
 # install time.
-RUN --mount=type=bind,from=refresh-node,source=/node,target=/tmp/refresh \
-    --mount=type=cache,target=/home/ubuntu/.npm,uid=1000,gid=1000 \
-    zxing_version="$(jq -r .version /tmp/refresh/zxing.json)" \
-    && jsqr_version="$(jq -r .version /tmp/refresh/jsqr.json)" \
-    && msedge_tts_version="$(jq -r .version /tmp/refresh/msedge-tts.json)" \
-    && tesseract_version="$(jq -r .version /tmp/refresh/tesseract.json)" \
+RUN --mount=type=cache,target=/home/ubuntu/.npm,uid=1000,gid=1000 \
+    zxing_version="$(curl -fsSL https://registry.npmjs.org/@zxing%2Flibrary/latest | jq -r .version)" \
+    && jsqr_version="$(curl -fsSL https://registry.npmjs.org/jsqr/latest | jq -r .version)" \
+    && msedge_tts_version="$(curl -fsSL https://registry.npmjs.org/msedge-tts/latest | jq -r .version)" \
+    && tesseract_version="$(curl -fsSL https://registry.npmjs.org/tesseract.js/latest | jq -r .version)" \
     && npm install --global --no-audit --no-fund \
         "@zxing/library@${zxing_version}" \
         "jsqr@${jsqr_version}" \
@@ -229,9 +201,8 @@ RUN --mount=type=bind,from=refresh-node,source=/node,target=/tmp/refresh \
 # without torch, PyAV reads .mp4/.webm/.mkv directly, and the model (~464 MB
 # for small) is fetched at build time so transcription works offline. Build
 # with --build-arg WHISPER_MODEL=base for a smaller, less accurate one.
-RUN --mount=type=bind,from=refresh-python,source=/python,target=/tmp/refresh \
-    --mount=type=cache,target=/home/ubuntu/.cache/pip,uid=1000,gid=1000 \
-    faster_whisper_version="$(jq -r .info.version /tmp/refresh/faster-whisper.json)" \
+RUN --mount=type=cache,target=/home/ubuntu/.cache/pip,uid=1000,gid=1000 \
+    faster_whisper_version="$(curl -fsSL https://pypi.org/pypi/faster-whisper/json | jq -r .info.version)" \
     && python3 -m pip install --user --break-system-packages \
         "faster-whisper==${faster_whisper_version}" \
     && ffmpeg -nostdin -v error -f lavfi -i sine=frequency=440:sample_rate=16000 -t 1 -y /tmp/probe.wav \
@@ -243,8 +214,7 @@ USER root
 # Ubuntu ships phpredis 5.3.7, which throws "Redis server went away" when
 # Redis::setOption() is called before connect(). Applications that set options
 # on a fresh client need 6.x, so build the current PECL release.
-RUN --mount=type=bind,from=refresh-redis,source=/redis,target=/tmp/refresh \
-    redis_version="$(tr -d '[:space:]' < /tmp/refresh/version)" \
+RUN redis_version="$(curl -fsSL https://pecl.php.net/rest/r/redis/latest.txt | tr -d '[:space:]')" \
     && yes '' | pecl install "redis-${redis_version}" \
     && php_version="$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')" \
     && echo extension=redis.so > "/etc/php/${php_version}/mods-available/redis.ini" \
@@ -253,8 +223,7 @@ RUN --mount=type=bind,from=refresh-redis,source=/redis,target=/tmp/refresh \
     && php -r 'echo "phpredis ", phpversion("redis"), PHP_EOL;' \
     && rm -rf /tmp/pear
 
-RUN --mount=type=bind,from=refresh-composer,source=/composer,target=/tmp/refresh \
-    composer_version="$(jq -r '.stable[0].version' /tmp/refresh/versions.json)" \
+RUN composer_version="$(curl -fsSL https://getcomposer.org/versions | jq -r '.stable[0].version')" \
     && curl -fsSL https://getcomposer.org/installer -o /tmp/composer-setup.php \
     && php /tmp/composer-setup.php \
         --version="${composer_version}" \
@@ -263,18 +232,23 @@ RUN --mount=type=bind,from=refresh-composer,source=/composer,target=/tmp/refresh
     && rm /tmp/composer-setup.php \
     && composer --version
 
-RUN --mount=type=bind,from=refresh-minio,source=/minio,target=/tmp/refresh \
-    curl -fsSL https://dl.min.io/server/minio/release/linux-amd64/minio -o /usr/local/bin/minio \
+# The published checksum arrives before the binary it describes, so a release
+# that lands between the two downloads fails the check instead of passing it.
+RUN curl -fsSL https://dl.min.io/server/minio/release/linux-amd64/minio.sha256sum -o /tmp/minio.sha256sum \
+    && curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc.sha256sum -o /tmp/mc.sha256sum \
+    && curl -fsSL https://dl.min.io/server/minio/release/linux-amd64/minio -o /usr/local/bin/minio \
     && curl -fsSL https://dl.min.io/client/mc/release/linux-amd64/mc -o /usr/local/bin/mc \
-    && echo "$(cut -d ' ' -f 1 /tmp/refresh/minio.sha256sum)  /usr/local/bin/minio" | sha256sum -c - \
-    && echo "$(cut -d ' ' -f 1 /tmp/refresh/mc.sha256sum)  /usr/local/bin/mc" | sha256sum -c - \
+    && echo "$(cut -d ' ' -f 1 /tmp/minio.sha256sum)  /usr/local/bin/minio" | sha256sum -c - \
+    && echo "$(cut -d ' ' -f 1 /tmp/mc.sha256sum)  /usr/local/bin/mc" | sha256sum -c - \
+    && rm /tmp/minio.sha256sum /tmp/mc.sha256sum \
     && chmod 0755 /usr/local/bin/minio /usr/local/bin/mc \
     && minio --version \
     && mc --version
 
-RUN --mount=type=bind,from=refresh-yt-dlp,source=/yt-dlp,target=/tmp/refresh \
-    curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
-    && (cd /usr/local/bin && grep '  yt-dlp$' /tmp/refresh/SHA2-256SUMS | sha256sum -c -) \
+RUN curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/SHA2-256SUMS -o /tmp/SHA2-256SUMS \
+    && curl -fsSL https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
+    && (cd /usr/local/bin && grep '  yt-dlp$' /tmp/SHA2-256SUMS | sha256sum -c -) \
+    && rm /tmp/SHA2-256SUMS \
     && chmod 0755 /usr/local/bin/yt-dlp \
     && yt-dlp --version
 
@@ -310,15 +284,15 @@ RUN magick_asset="ImageMagick-${IMAGEMAGICK_VERSION}-gcc-x86_64.AppImage" \
     && magick -size 8x8 gradient:red-blue /tmp/probe.webp \
     && rm /tmp/probe.webp
 
-# Chrome is the most frequently changing large system package, so keep it near
-# the end. Its repository metadata both invalidates the layer and supplies the
-# exact version used to verify the downloaded package.
-RUN --mount=type=bind,from=refresh-chrome,source=/chrome,target=/tmp/refresh \
-    --mount=type=cache,target=/var/cache/apt,sharing=locked \
+# Chrome is the largest weekly-moving system package, so keep it near the end.
+# Its repository metadata supplies the exact version used to verify the
+# downloaded package.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
-    chrome_version="$(awk '/^Package: google-chrome-stable$/ { stable=1 } stable && /^Version:/ { print $2; exit }' /tmp/refresh/Packages)" \
-    && chrome_filename="$(awk '/^Package: google-chrome-stable$/ { stable=1 } stable && /^Filename:/ { print $2; exit }' /tmp/refresh/Packages)" \
-    && chrome_sha256="$(awk '/^Package: google-chrome-stable$/ { stable=1 } stable && /^SHA256:/ { print $2; exit }' /tmp/refresh/Packages)" \
+    curl -fsSL https://dl.google.com/linux/chrome/deb/dists/stable/main/binary-amd64/Packages -o /tmp/Packages \
+    && chrome_version="$(awk '/^Package: google-chrome-stable$/ { stable=1 } stable && /^Version:/ { print $2; exit }' /tmp/Packages)" \
+    && chrome_filename="$(awk '/^Package: google-chrome-stable$/ { stable=1 } stable && /^Filename:/ { print $2; exit }' /tmp/Packages)" \
+    && chrome_sha256="$(awk '/^Package: google-chrome-stable$/ { stable=1 } stable && /^SHA256:/ { print $2; exit }' /tmp/Packages)" \
     && test -n "${chrome_version}" \
     && test -n "${chrome_filename}" \
     && test -n "${chrome_sha256}" \
@@ -328,7 +302,7 @@ RUN --mount=type=bind,from=refresh-chrome,source=/chrome,target=/tmp/refresh \
     && echo "${chrome_sha256}  /tmp/google-chrome.deb" | sha256sum -c - \
     && apt-get install -y --no-install-recommends /tmp/google-chrome.deb \
     && test "$(dpkg-query -W -f='${Version}' google-chrome-stable)" = "${chrome_version}" \
-    && rm /tmp/google-chrome.deb \
+    && rm /tmp/google-chrome.deb /tmp/Packages \
     && google-chrome --version \
     && mv /tmp/docker-clean /etc/apt/apt.conf.d/docker-clean
 
@@ -343,8 +317,14 @@ RUN ln -sf /usr/share/zoneinfo/${TZ} /etc/localtime \
 
 USER ubuntu
 
-# Remote metadata participates in Docker's cache key, so new CLI releases
-# invalidate these inexpensive layers at the end of the file.
+# =============================================================================
+# Every-build layers
+#
+# The refresh stages at the top of the file read npm on every build, so these
+# two layers follow a CLI release the day it appears. They are last and cheap:
+# a new Claude or Codex costs seconds and leaves every layer above untouched.
+# =============================================================================
+
 RUN --mount=type=bind,from=refresh-claude,source=/claude,target=/tmp/refresh \
     CLAUDE_VERSION="$(jq -r .version /tmp/refresh/package.json)" \
     && echo "Installing Claude ${CLAUDE_VERSION}..." \
