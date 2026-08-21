@@ -284,6 +284,38 @@ RUN magick_asset="ImageMagick-${IMAGEMAGICK_VERSION}-gcc-x86_64.AppImage" \
     && magick -size 8x8 gradient:red-blue /tmp/probe.webp \
     && rm /tmp/probe.webp
 
+# Docker itself, daemon included: the container runs its own engine under
+# --privileged, so no socket is bound in from the host. Ubuntu's docker.io
+# trails upstream, so the packages come from Docker's own repository, which
+# apt verifies against the key installed beside it.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    install -m 0755 -d /etc/apt/keyrings \
+    && curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
+        -o /etc/apt/keyrings/docker.asc \
+    && chmod a+r /etc/apt/keyrings/docker.asc \
+    && printf '%s\n' \
+        'Types: deb' \
+        'URIs: https://download.docker.com/linux/ubuntu' \
+        "Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")" \
+        'Components: stable' \
+        "Architectures: $(dpkg --print-architecture)" \
+        'Signed-By: /etc/apt/keyrings/docker.asc' \
+        > /etc/apt/sources.list.d/docker.sources \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+        containerd.io \
+        docker-buildx-plugin \
+        docker-ce \
+        docker-ce-cli \
+        docker-compose-plugin \
+    && docker --version \
+    && dockerd --version \
+    && docker buildx version \
+    && docker compose version
+
+RUN usermod -aG docker ubuntu
+
 # Chrome is the largest weekly-moving system package, so keep it near the end.
 # Its repository metadata supplies the exact version used to verify the
 # downloaded package.
@@ -347,4 +379,8 @@ COPY --chown=0:0 --chmod=0755 files/bin/services /usr/local/bin/services
 # back out of a recording.
 COPY --chown=0:0 --chmod=0755 files/bin.ai/ /usr/local/bin/
 
+USER root
+COPY --chmod=0755 files/docker-entrypoint /usr/local/bin/docker-entrypoint
 WORKDIR /app
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint"]
+CMD ["bash"]

@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# http://www.gnu.org/software/bash/manual/bash.html#The-Set-Builtin
+# http://redsymbol.net/articles/unofficial-bash-strict-mode
+set -o nounset -o errexit -o pipefail
+
+if test "${DOCKER_DIND:-0}" = 1; then
+    dockerd >/tmp/dockerd.log 2>&1 &
+
+    for i in $(seq 1 100); do
+        if docker info >/dev/null 2>&1; then
+            break
+        fi
+
+        if ! kill -0 $! 2>/dev/null; then
+            cat /tmp/dockerd.log >&2
+            exit 1
+        fi
+
+        sleep 0.1
+    done
+
+    if ! docker info >/dev/null 2>&1; then
+        cat /tmp/dockerd.log >&2
+        exit 1
+    fi
+fi
+
+export HOME=/home/ubuntu
+export USER=ubuntu
+export LOGNAME=ubuntu
+
+exec setpriv \
+    --reuid=ubuntu \
+    --regid=ubuntu \
+    --init-groups \
+    "$@"
