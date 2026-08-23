@@ -14,6 +14,8 @@ const fs_read_json = require('@vbarbarosh/node-helpers/src/fs_read_json');
 const fs_write_json = require('@vbarbarosh/node-helpers/src/fs_write_json');
 const sanitize_filename = require('@vbarbarosh/node-helpers/src/sanitize_filename');
 
+const PORT = parseInt(process.env.PORT) || 3000;
+
 cli(main);
 
 async function main()
