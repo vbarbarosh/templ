@@ -54,6 +54,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         ca-certificates \
         curl \
         ethtool \
+        exiftran \
         ffmpeg \
         file \
         fonts-inter \
@@ -67,6 +68,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         imagemagick \
         iproute2 \
         jq \
+        libjpeg-turbo-progs \
         make \
         man \
         mysql-client \
@@ -118,6 +120,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     && pngquant --version \
     && cwebp -version \
     && zopflipng -h > /dev/null \
+    && cjpeg -version \
+    && djpeg -version \
+    && jpegtran -version \
+    && exiftran -h > /dev/null \
     && mv /tmp/docker-clean /etc/apt/apt.conf.d/docker-clean
 
 RUN curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" -o /tmp/node.tar.xz \
