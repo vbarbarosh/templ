@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Logline</title>
+    <script>
+      try {
+        const saved = localStorage.getItem('logline-theme');
+        const light = saved
+          ? saved === 'light'
+          : window.matchMedia('(prefers-color-scheme: light)').matches;
+        document.documentElement.dataset.theme = light ? 'light' : 'dark';
+      } catch (_) {
+        document.documentElement.dataset.theme = 'dark';
+      }
+    </script>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <main class="app-shell">
+        <header class="topbar">
+          <div class="brand">
+            <span class="brand-mark" aria-hidden="true"></span>
+            <div>
+              <h1>Logline</h1>
+              <p>Local ClickHouse logs</p>
+            </div>
+          </div>
+
+          <div class="status-group">
+            <span class="query-status">{{ queryStatus }}</span>
+            <button type="button" class="share-button" :disabled="sharing" @click="shareCurrentView">
+              <span aria-hidden="true">↗</span>{{ sharing ? 'Preparing…' : 'Copy link' }}
+            </button>
+            <span class="status-pill" :class="{ live: followLive }"><i></i>{{ followLive ? 'Live' : 'Paused' }}</span>
+            <label class="theme-switch" :title="lightTheme ? 'Switch to dark theme' : 'Switch to light theme'">
+              <input v-model="lightTheme" type="checkbox" :aria-label="lightTheme ? 'Use dark theme' : 'Use light theme'">
+              <span class="theme-track" aria-hidden="true">
+                <span class="theme-icon">☾</span>
+                <i></i>
+                <span class="theme-icon">☀</span>
+              </span>
+            </label>
+          </div>
+        </header>
+
+        <section class="filter-panel" aria-label="Log filters">
+          <div class="field terms-field">
+            <label for="terms">Contains all substrings</label>
+            <input
+              id="terms"
+              v-model="termsInput"
+              type="text"
+              spellcheck="false"
+              placeholder="cron disk !success"
+              @input="scheduleSearch"
+              @keydown.ctrl.enter.prevent="runSearch"
+              @keydown.meta.enter.prevent="runSearch"
+            >
+          </div>
+
+          <div class="field date-field">
+            <label for="rangeFrom">From</label>
+            <input id="rangeFrom" v-model="rangeFrom" type="datetime-local" step="1" @change="runSearch">
+          </div>
+
+          <div class="field date-field">
+            <label for="rangeTo">To</label>
+            <input id="rangeTo" v-model="rangeTo" type="datetime-local" step="1" @change="runSearch">
+          </div>
+
+          <div class="quick-row">
+            <div class="presets" aria-label="Quick date ranges">
+              <button
+                v-for="preset in presets"
+                :key="preset.seconds"
+                type="button"
+                :class="{ active: activePreset === preset.seconds }"
+                @click="setPreset(preset.seconds)"
+              >{{ preset.label }}</button>
+            </div>
+
+            <label class="service-control">
+              Service
+              <select
+                v-model="serviceFilter"
+                aria-label="Filter by exact service name"
+                @change="applyServiceFilter"
+              >
+                <option value="">All services</option>
+                <option v-for="service in serviceChoices" :key="service" :value="service">{{ service }}</option>
+              </select>
+            </label>
+
+            <label class="toggle">
+              <input v-model="followLive" type="checkbox" @change="onFollowChange">
+              <span></span>
+              Follow live
+            </label>
+
+            <label class="refresh-control">
+              Refresh every
+              <input
+                v-model.number="refreshSeconds"
+                type="number"
+                min="1"
+                max="300"
+                step="0.5"
+                aria-label="Automatic refresh interval in seconds"
+                @change="applyRefreshInterval"
+              >
+              <span>sec</span>
+            </label>
+
+            <label class="toggle">
+              <input v-model="stripAnsiEnabled" type="checkbox">
+              <span></span>
+              Strip ANSI
+            </label>
+
+            <label class="toggle">
+              <input v-model="ignoreEmptyEnabled" type="checkbox" @change="applyIgnoreEmpty">
+              <span></span>
+              Hide empty
+            </label>
+
+            <span class="syntax-note">Space-separated AND · !text excludes</span>
+          </div>
+
+          <div v-if="investigation" class="investigation-banner" role="status">
+            <span class="investigation-icon" aria-hidden="true">⌖</span>
+            <div>
+              <strong>{{ investigationLabel }}</strong>
+              <span>Body terms can further narrow this scoped view.</span>
+            </div>
+            <button type="button" @click="restoreSearch">← Back to search</button>
+          </div>
+        </section>
+
+        <section class="chart-panel" aria-label="Log volume">
+          <div class="chart-heading">
+            <div>
+              <span class="eyebrow">Volume</span>
+              <strong>{{ formattedEventCount }}</strong>
+              <span>events</span>
+            </div>
+            <span class="bucket-label">{{ bucketLabel }}</span>
+          </div>
+          <div class="histogram" role="img" aria-label="Filtered events over time">
+            <svg viewBox="0 0 1000 70" preserveAspectRatio="none">
+              <line v-for="y in [5, 35, 65]" :key="y" class="grid" x1="0" x2="1000" :y1="y" :y2="y"></line>
+              <rect
+                v-for="bar in chartBars"
+                :key="bar.bucket"
+                class="bar"
+                :x="bar.x"
+                :y="bar.y"
+                :width="bar.width"
+                :height="bar.height"
+                @click="zoomToBucket(bar.bucket)"
+              ><title>{{ bar.title }}</title></rect>
+            </svg>
+            <div class="chart-axis"><span>{{ rangeStartLabel }}</span><span>{{ rangeEndLabel }}</span></div>
+          </div>
+        </section>
+
+        <section class="log-panel">
+          <div class="log-header" aria-hidden="true">
+            <span>Time</span>
+            <span>Service</span>
+            <span>Message</span>
+          </div>
+          <div
+            ref="viewport"
+            class="log-viewport"
+            tabindex="0"
+            @scroll="onScroll"
+            @wheel.passive="cancelAutoScroll"
+            @touchstart.passive="cancelAutoScroll"
+            @pointerdown="cancelAutoScroll"
+          >
+            <div class="log-canvas" :style="{ height: canvasHeight + 'px' }">
+              <div
+                v-for="item in visibleRows"
+                :key="item.row.key"
+                class="log-row"
+                :class="rowClasses(item.row)"
+                :style="{ top: (item.index * rowHeight) + 'px' }"
+                @click="openDetail(item.row)"
+              >
+                <span class="log-time">{{ formatTime(item.row.timestamp_ms) }}</span>
+                <span class="log-service" :title="item.row.service || 'unknown'">{{ item.row.service || 'unknown' }}</span>
+                <span class="log-message" :title="listBody(item.row)">
+                  <highlighted-text :text="listBody(item.row)" :terms="active ? active.terms : []"></highlighted-text>
+                </span>
+              </div>
+            </div>
+            <div v-if="!rows.length && !loadingInitial" class="empty-state">
+              <strong>No logs in this range</strong>
+              <span>Change the substrings or widen the date range.</span>
+            </div>
+            <div v-if="loadingOlder" class="loading-older">Loading older logs…</div>
+          </div>
+        </section>
+      </main>
+
+      <aside class="detail-drawer" :class="{ open: selectedRow }" :aria-hidden="selectedRow ? 'false' : 'true'">
+        <div class="drawer-head">
+          <div>
+            <span class="eyebrow">Log detail</span>
+            <strong>{{ selectedRow ? selectedRow.service : '' }}</strong>
+          </div>
+          <button type="button" aria-label="Close details" @click="closeDetail">×</button>
+        </div>
+        <dl>
+          <template v-for="item in detailMetadata" :key="item.name">
+            <dt>{{ item.name }}</dt><dd>{{ item.value }}</dd>
+          </template>
+        </dl>
+        <section v-if="selectedRow" class="investigation-actions" aria-label="Investigate this log entry">
+          <span class="eyebrow">Investigate</span>
+          <div>
+            <button type="button" @click="investigateContext(selectedRow)">
+              <strong>Surroundings</strong>
+              <small>{{ inferGroupUid(selectedRow) ? 'Nearby + same group' : (selectedRow.container_id ? 'Same container · ±2 min' : 'Same service · ±2 min') }}</small>
+            </button>
+            <button type="button" :disabled="!selectedRow.group_uid" @click="investigateGroup(selectedRow)">
+              <strong>This group</strong>
+              <small>{{ selectedRow.group_uid || 'No group ID found' }}</small>
+            </button>
+            <button v-if="selectedRow.parent_group_uid" type="button" @click="investigateGroup(selectedRow, true)">
+              <strong>Parent group</strong>
+              <small>{{ selectedRow.parent_group_uid }}</small>
+            </button>
+          </div>
+        </section>
+        <div class="detail-body-head">
+          <span>Body</span>
+          <button type="button" @click="copyBody">Copy</button>
+        </div>
+        <pre>{{ selectedRow ? displayBody(selectedRow.body) : '' }}</pre>
+      </aside>
+
+      <div class="toast" :class="{ show: toastVisible }" role="status" aria-live="polite">{{ toastMessage }}</div>
+    </div>
+
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js" defer></script>
+    <script src="/app.js" defer></script>
+  </body>
+</html>
