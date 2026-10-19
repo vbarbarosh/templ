@@ -1,0 +1,38 @@
+{
+    "voice": {
+        "engine": "msedge-tts",
+        "engine_version": "2.0.7",
+        "voice": "en-US-AndrewMultilingualNeural",
+        "output_format": "AUDIO_24KHZ_96KBITRATE_MONO_MP3",
+        "rate": "default",
+        "pitch": "default",
+        "volume": "default"
+    },
+    "fx": {
+        "sample_rate": 48000,
+        "gains": {
+            "click": 0.07,
+            "key": 0.035,
+            "enter": 0.06,
+            "success_chime": 0.12,
+            "closing_chime": 0.11
+        },
+        "transitions": "silent"
+    },
+    "mix": {
+        "loudnorm": {"I": -16, "TP": -1.5, "LRA": 11, "mode": "two-pass linear"},
+        "end_fade_out_seconds": 1.4,
+        "audio_codec": "aac",
+        "audio_bitrate": "160k"
+    },
+    "video": {
+        "resolution": "1920x1080",
+        "fps": 30,
+        "viewport": "1280x720 at --force-device-scale-factor=1.5",
+        "codec": "libx264",
+        "crf": 18,
+        "preset": "slow",
+        "intro_card": {"seconds": 3.4, "fade_in": 0.5, "xfade": 0.6},
+        "outro_card": {"seconds": 3.4, "fade_out": 0.9, "xfade": 0.6}
+    }
+}
